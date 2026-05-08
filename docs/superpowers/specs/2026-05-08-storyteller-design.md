@@ -92,7 +92,11 @@ lib/
   art-styles.ts                  预置画风列表与 prompt 模板
   config.ts                      .env 解析（API key、并发数等）
 
-storage/images/                  生成图与上传图（运行时创建，gitignore）
+data/                            运行时数据（整个目录 gitignore）
+  storyteller.db                 SQLite 主文件
+  storyteller.db-shm             SQLite WAL 共享内存（运行时生成）
+  storyteller.db-wal             SQLite WAL 日志（运行时生成）
+  images/{story_id}/{asset_id}.png   生成图与用户上传图
 
 evals/
   runner.ts                      手动触发：pnpm eval
@@ -196,7 +200,7 @@ assets
   id            uuid pk
   story_id      uuid fk
   kind          text             // 'cds' | 'scene' | 'user_upload'
-  file_path     text
+  file_path     text             // 相对项目根的路径，如 data/images/{story_id}/{asset_id}.png
   mime          text
   created_at    int
 
@@ -319,16 +323,17 @@ OPENAI_TEXT_MODEL=gpt-5
 OPENAI_IMAGE_MODEL=gpt-image-1
 JOB_CONCURRENCY=3
 PROVIDER_MODE=openai           # fake | openai
-DATABASE_URL=file:./storyteller.db
-STORAGE_DIR=./storage
+DATABASE_URL=file:./data/storyteller.db
+STORAGE_DIR=./data/images
 ```
 
 ## 12. 部署
 
 - 自托管 Node：`pnpm build && pnpm start`
 - 无 Serverless 时限问题（生图 60s+ 安全）
-- SQLite 文件 + storage 目录持久化即可备份
+- 所有运行时数据集中在 `data/` 目录（DB + 图片），打包 / 备份 / Docker 卷挂载（`-v ./data:/app/data`）一步搞定
 - 无需对象存储、无需消息队列
+- `.gitignore` 仅需一行：`/data/`
 
 ## 13. 范围之外（明确不做）
 
