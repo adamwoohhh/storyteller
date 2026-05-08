@@ -1,0 +1,94 @@
+"use client";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { api } from "@/lib/client/api";
+import { StepStoryText } from "./StepStoryText";
+import { StepExtract } from "./StepExtract";
+import { StepStoryboard } from "./StepStoryboard";
+import { StepArtStyle } from "./StepArtStyle";
+import { StepCDS } from "./StepCDS";
+import { StepRender } from "./StepRender";
+import { EditorCanvas } from "./EditorCanvas";
+import { ReadView } from "./ReadView";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Data = any;
+
+export function StepShell({
+  storyId,
+  step,
+  mode,
+}: {
+  storyId: string;
+  step: string;
+  mode: string;
+}) {
+  const router = useRouter();
+  const sp = useSearchParams();
+  const [data, setData] = useState<Data | null>(null);
+
+  const reload = useCallback(
+    async () => api.getStory(storyId).then(setData),
+    [storyId],
+  );
+
+  useEffect(() => {
+    reload().catch(() => {});
+  }, [reload]);
+
+  if (!data) return <div className="p-8">加载中…</div>;
+
+  const goto = (s: string) => router.push(`/s/${storyId}?step=${s}`);
+  const gotoMode = (m: "edit" | "read") => router.push(`/s/${storyId}?mode=${m}`);
+
+  if (sp.get("mode") && !sp.get("step")) {
+    return mode === "read" ? (
+      <ReadView data={data} onSwitch={() => gotoMode("edit")} />
+    ) : (
+      <EditorCanvas data={data} onSwitch={() => gotoMode("read")} reload={reload} />
+    );
+  }
+
+  switch (step) {
+    case "story":
+      return (
+        <StepStoryText data={data} onNext={() => goto("storyboard")} reload={reload} />
+      );
+    case "extract":
+      return (
+        <StepExtract data={data} onNext={() => goto("storyboard")} reload={reload} />
+      );
+    case "storyboard":
+      return (
+        <StepStoryboard data={data} onNext={() => goto("style")} reload={reload} />
+      );
+    case "style":
+      return <StepArtStyle data={data} onNext={() => goto("cds")} reload={reload} />;
+    case "cds":
+      return <StepCDS data={data} onNext={() => goto("render")} reload={reload} />;
+    case "render":
+      return (
+        <StepRender
+          data={data}
+          onDone={() => router.push(`/s/${storyId}?mode=edit`)}
+          reload={reload}
+        />
+      );
+    default: {
+      const s = data.story.status as string;
+      const map: Record<string, string> = {
+        draft: "story",
+        text_done: "storyboard",
+        storyboard_done: "style",
+        style_done: "cds",
+        cds_done: "render",
+        rendering: "render",
+        done: "",
+      };
+      const next = map[s] ?? "story";
+      if (next) router.replace(`/s/${storyId}?step=${next}`);
+      else router.replace(`/s/${storyId}?mode=edit`);
+      return <div className="p-8">跳转中…</div>;
+    }
+  }
+}
