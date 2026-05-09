@@ -1,10 +1,18 @@
 "use client";
-import { useMemo } from "react";
-import ReactFlow, { Background, Controls, MiniMap, type Node, type Edge } from "reactflow";
+import { useEffect, useMemo } from "react";
+import ReactFlow, {
+  Background,
+  Controls,
+  MiniMap,
+  useNodesState,
+  type Node,
+  type Edge,
+} from "reactflow";
 import "reactflow/dist/style.css";
 import { Button } from "@/components/ui/button";
 import { StoryNodeView } from "./StoryNode";
 import { api } from "@/lib/client/api";
+import { getEditorNodePosition } from "./editor-layout";
 
 const nodeTypes = { story: StoryNodeView };
 
@@ -20,12 +28,16 @@ export function EditorCanvas({
   onSwitch: () => void;
   reload: () => Promise<void>;
 }) {
-  const nodes = useMemo<Node[]>(
+  const sortedNodes = useMemo(
+    () => [...data.nodes].sort((a: Any, b: Any) => a.orderIndex - b.orderIndex),
+    [data.nodes],
+  );
+  const initialNodes = useMemo<Node[]>(
     () =>
-      data.nodes.map((n: Any) => ({
+      sortedNodes.map((n: Any, index: number) => ({
         id: n.id,
         type: "story",
-        position: { x: n.positionX || 0, y: n.positionY || 0 },
+        position: getEditorNodePosition(n, index, sortedNodes),
         data: {
           id: n.id,
           text: n.text,
@@ -34,18 +46,23 @@ export function EditorCanvas({
           onChanged: reload,
         },
       })),
-    [data.nodes, reload],
+    [sortedNodes, reload],
   );
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+
+  useEffect(() => {
+    setNodes(initialNodes);
+  }, [initialNodes, setNodes]);
+
   const edges = useMemo<Edge[]>(() => {
-    const sorted = [...data.nodes].sort((a: Any, b: Any) => a.orderIndex - b.orderIndex);
-    return sorted.slice(1).map((n: Any, i: number) => ({
-      id: `e-${sorted[i]!.id}-${n.id}`,
-      source: sorted[i]!.id,
+    return sortedNodes.slice(1).map((n: Any, i: number) => ({
+      id: `e-${sortedNodes[i]!.id}-${n.id}`,
+      source: sortedNodes[i]!.id,
       target: n.id,
       animated: false,
       style: { stroke: "#8aa96b", strokeDasharray: "5 5", strokeWidth: 2, opacity: 0.8 },
     }));
-  }, [data.nodes]);
+  }, [sortedNodes]);
 
   function onNodeDragStop(_: unknown, n: Node) {
     api.patchNode(n.id, { positionX: n.position.x, positionY: n.position.y }).catch(() => {});
@@ -68,7 +85,11 @@ export function EditorCanvas({
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
+          onNodesChange={onNodesChange}
           onNodeDragStop={onNodeDragStop}
+          nodesDraggable
+          nodesConnectable={false}
+          elementsSelectable
           fitView
         >
           <Background color="#d7bd8a" gap={24} />

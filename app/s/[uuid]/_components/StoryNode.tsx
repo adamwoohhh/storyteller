@@ -54,6 +54,7 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
           <Button
             size="sm"
             variant="outline"
+            className="nodrag nopan"
             onClick={regen}
             disabled={job.status === "running"}
           >
