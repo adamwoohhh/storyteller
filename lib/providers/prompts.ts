@@ -18,12 +18,19 @@ export function buildStoryUser(input: StoryInput, revise?: ReviseOpts): string {
 export const STORYBOARD_SYSTEM = `你是一位绘本分镜师。把给定故事文本切分成节点，每个节点附一段专为生图模型优化的英文 image_prompt（以视觉细节为主：构图/动作/表情/光线/场景）。`;
 
 export function buildStoryboardUser(storyText: string, opts: StoryboardOpts): string {
-  const charLines = opts.characters.map((c) => `- ${c.id} ${c.name}: ${c.description}`).join("\n");
+  const charLines = opts.characters
+    .map((c) => `- id: ${c.id}\n  name: ${c.name}\n  description: ${c.description}`)
+    .join("\n");
+  const ids = opts.characters.map((c) => c.id).join(", ") || "（无角色）";
+  const first = opts.characters[0];
+  const idExample = first
+    ? `例如角色 ${first.name} 必须写 ${first.id}，不能写 ${first.id} ${first.name}，也不能只写 ${first.name}。`
+    : "";
   const sliceRule =
     opts.mode === "paste"
       ? "节点 text 字段必须是原文的精确切片（连续字符），不得改写或扩写。"
       : "节点 text 字段可以是原文段落或轻度润色。";
-  return `角色清单：\n${charLines}\n\n${sliceRule}\n目标节点数：${opts.targetMin}-${opts.targetMax}\n\n故事文本：\n${storyText}`;
+  return `角色清单：\n${charLines}\n\ncharacters 字段只能填写角色 ID，必须从以下 ID 中选择：${ids}。\n${idExample}\n如果某个节点没有角色，characters 返回空数组 []。\n\n${sliceRule}\n目标节点数：${opts.targetMin}-${opts.targetMax}\n\n故事文本：\n${storyText}`;
 }
 
 export const STORYBOARD_SCHEMA = {

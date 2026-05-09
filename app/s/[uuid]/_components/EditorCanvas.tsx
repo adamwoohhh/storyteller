@@ -47,12 +47,15 @@ export function EditorCanvas({
         data: {
           id: n.id,
           text: n.text,
+          characters: n.characters,
           imagePrompt: n.imagePrompt,
           imageId: n.imageId,
+          story: data.story,
+          allCharacters: data.characters,
           onChanged: reload,
         },
       })),
-    [sortedNodes, reload],
+    [sortedNodes, data.story, data.characters, reload],
   );
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const canvasRef = useRef<HTMLDivElement>(null);

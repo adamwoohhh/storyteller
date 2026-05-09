@@ -27,6 +27,14 @@ export async function generateStoryboard(args: {
     targetMin,
     targetMax,
   });
+  const validCharacterIds = new Set(charRows.map((c) => c.id));
+  for (const draft of drafts) {
+    for (const characterId of draft.characters) {
+      if (!validCharacterIds.has(characterId)) {
+        throw new Error(`invalid storyboard character id: ${characterId}`);
+      }
+    }
+  }
 
   db.delete(nodes).where(eq(nodes.storyId, storyId)).run();
   const result: {

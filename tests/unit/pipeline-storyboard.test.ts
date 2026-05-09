@@ -4,6 +4,7 @@ import { makeTestDb } from "../helpers/db";
 import { stories, characters, nodes } from "@/lib/db/schema";
 import { generateStoryboard } from "@/lib/pipeline/storyboard";
 import { FakeTextProvider } from "@/lib/providers/fake-text";
+import type { NodeDraft, TextProvider } from "@/lib/providers/types";
 import { randomUUID } from "node:crypto";
 
 describe("pipeline.storyboard", () => {
@@ -35,4 +36,59 @@ describe("pipeline.storyboard", () => {
     const story = db.select().from(stories).where(eq(stories.id, id)).get();
     expect(story?.status).toBe("storyboard_done");
   });
+
+  it("rejects storyboard characters that are not exact character ids", async () => {
+    const { db } = await makeTestDb();
+    const storyId = randomUUID();
+    const characterId = randomUUID();
+    db.insert(stories)
+      .values({
+        id: storyId,
+        inputMode: "paste",
+        storyText: "兔叽叽和龟龟比赛。",
+      })
+      .run();
+    db.insert(characters)
+      .values({ id: characterId, storyId, name: "兔叽叽" })
+      .run();
+
+    await expect(
+      generateStoryboard({
+        db,
+        provider: new InvalidStoryboardCharacterProvider(`${characterId} 兔叽叽`),
+        storyId,
+        targetMin: 1,
+        targetMax: 1,
+      }),
+    ).rejects.toThrow(`invalid storyboard character id: ${characterId} 兔叽叽`);
+
+    expect(db.select().from(nodes).where(eq(nodes.storyId, storyId)).all()).toHaveLength(0);
+  });
 });
+
+class InvalidStoryboardCharacterProvider implements TextProvider {
+  constructor(private readonly characterValue: string) {}
+
+  async *generateStory(): AsyncIterable<string> {
+    yield "";
+  }
+
+  async extractCharacters(): Promise<[]> {
+    return [];
+  }
+
+  async generateStoryboard(): Promise<NodeDraft[]> {
+    return [
+      {
+        order_index: 0,
+        text: "兔叽叽和龟龟比赛。",
+        image_prompt: "rabbit and turtle racing",
+        characters: [this.characterValue],
+      },
+    ];
+  }
+
+  async generateCDS(): Promise<[]> {
+    return [];
+  }
+}
