@@ -146,6 +146,7 @@ vite.config.ts.timestamp-*
 # Storyteller runtime data
 /data/
 .superpowers/
+.worktrees/
 
 # Env
 .env.local
