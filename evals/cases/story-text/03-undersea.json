@@ -1,0 +1,11 @@
+{
+  "id": "undersea",
+  "input": {
+    "setting": "海底珊瑚城",
+    "characters": [
+      { "name": "贝贝", "description": "好奇的小章鱼" },
+      { "name": "海马爷爷", "description": "智慧的长者" }
+    ],
+    "opening": "海流带来了陆地上的纸船"
+  }
+}

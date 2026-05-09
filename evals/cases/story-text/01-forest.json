@@ -1,0 +1,11 @@
+{
+  "id": "forest",
+  "input": {
+    "setting": "森林深处住着一群会说话的动物",
+    "characters": [
+      { "name": "小红", "description": "勇敢的小狐狸" },
+      { "name": "灰兔", "description": "胆小但善良" }
+    ],
+    "opening": "一封神秘的信出现在树洞里"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "space",
+  "input": {
+    "setting": "未来的太空殖民地",
+    "characters": [{ "name": "Lila", "description": "13 岁的工程少女" }],
+    "opening": "她发现空间站的能源出现异常"
+  }
+}
