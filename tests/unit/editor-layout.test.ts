@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { getEditorNodePosition } from "@/app/s/[uuid]/_components/editor-layout";
+import {
+  getEditorNodePosition,
+  getOrganizedNodePositions,
+} from "@/app/s/[uuid]/_components/editor-layout";
 
 describe("getEditorNodePosition", () => {
   it("spreads generated default vertical positions into a draggable grid", () => {
@@ -42,6 +45,64 @@ describe("getEditorNodePosition", () => {
       { x: 120, y: 80 },
       { x: 380, y: 0 },
       { x: 760, y: 0 },
+    ]);
+  });
+});
+
+describe("getOrganizedNodePositions", () => {
+  it("lays nodes out horizontally and wraps based on canvas width and node width", () => {
+    expect(
+      getOrganizedNodePositions({
+        count: 5,
+        canvasWidth: 900,
+        nodeWidth: 288,
+        nodeHeight: 430,
+        gapX: 56,
+        gapY: 88,
+      }),
+    ).toEqual([
+      { x: 0, y: 0 },
+      { x: 344, y: 0 },
+      { x: 0, y: 518 },
+      { x: 344, y: 518 },
+      { x: 0, y: 1036 },
+    ]);
+  });
+
+  it("keeps at least one node per row on narrow canvases", () => {
+    expect(
+      getOrganizedNodePositions({
+        count: 3,
+        canvasWidth: 240,
+        nodeWidth: 288,
+        nodeHeight: 430,
+        gapX: 56,
+        gapY: 88,
+      }),
+    ).toEqual([
+      { x: 0, y: 0 },
+      { x: 0, y: 518 },
+      { x: 0, y: 1036 },
+    ]);
+  });
+
+  it("uses the tallest node in each row when calculating the next row", () => {
+    expect(
+      getOrganizedNodePositions({
+        count: 5,
+        canvasWidth: 900,
+        nodeWidth: 288,
+        nodeHeight: 430,
+        nodeHeights: [430, 600, 300, 500, 200],
+        gapX: 56,
+        gapY: 88,
+      }),
+    ).toEqual([
+      { x: 0, y: 0 },
+      { x: 344, y: 0 },
+      { x: 0, y: 688 },
+      { x: 344, y: 688 },
+      { x: 0, y: 1276 },
     ]);
   });
 });
