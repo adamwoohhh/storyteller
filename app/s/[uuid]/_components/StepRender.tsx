@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/client/api";
 import { useJob } from "@/lib/client/useJob";
+import { StepFrame } from "./StepFrame";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
@@ -37,16 +38,27 @@ export function StepRender({
   const pct = total === 0 ? 0 : Math.round((current / total) * 100);
 
   return (
-    <main className="max-w-3xl mx-auto p-8 space-y-6">
-      <h2 className="text-xl font-semibold">生成插图</h2>
-      <Progress value={pct} />
-      <div className="text-sm text-muted-foreground">
-        {current} / {total} 完成（{pct}%）
+    <StepFrame
+      title="生成插图"
+      description="故事镜头正在一张张变成绘本插图。"
+      currentStep="render"
+    >
+      <div className="rounded-3xl bg-[#fff8e8] p-5">
+        <Progress value={pct} />
+        <div className="mt-4 text-center text-sm font-black text-muted-foreground">
+          {current} / {total} 完成（{pct}%）
+        </div>
       </div>
-      {job.status === "error" && <div className="text-red-600">出错：{job.error}</div>}
-      <Button variant="outline" onClick={() => jobId && api.cancelJob(jobId)}>
-        取消
-      </Button>
-    </main>
+      {job.status === "error" && (
+        <div className="mt-4 rounded-3xl bg-destructive/10 p-4 text-destructive">
+          出错：{job.error}
+        </div>
+      )}
+      <div className="mt-6 flex justify-center">
+        <Button variant="outline" onClick={() => jobId && api.cancelJob(jobId)}>
+          取消
+        </Button>
+      </div>
+    </StepFrame>
   );
 }

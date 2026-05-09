@@ -36,7 +36,15 @@ export function StepShell({
     reload().catch(() => {});
   }, [reload]);
 
-  if (!data) return <div className="p-8">加载中…</div>;
+  if (!data) {
+    return (
+      <main className="story-bg flex min-h-screen items-center justify-center px-4">
+        <div className="story-panel px-8 py-6 text-center font-black text-primary">
+          加载故事小剧场中…
+        </div>
+      </main>
+    );
+  }
 
   const goto = (s: string) => router.push(`/s/${storyId}?step=${s}`);
   const gotoMode = (m: "edit" | "read") => router.push(`/s/${storyId}?mode=${m}`);
@@ -88,7 +96,13 @@ export function StepShell({
       const next = map[s] ?? "story";
       if (next) router.replace(`/s/${storyId}?step=${next}`);
       else router.replace(`/s/${storyId}?mode=edit`);
-      return <div className="p-8">跳转中…</div>;
+      return (
+        <main className="story-bg flex min-h-screen items-center justify-center px-4">
+          <div className="story-panel px-8 py-6 text-center font-black text-primary">
+            正在打开下一幕…
+          </div>
+        </main>
+      );
     }
   }
 }

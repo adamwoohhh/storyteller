@@ -14,6 +14,7 @@ export function useJob(jobId: string | null): JobState {
 
   useEffect(() => {
     if (!jobId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setState({ status: "running", chunks: "" });
     const es = new EventSource(`/api/sse/jobs/${jobId}`);
     es.addEventListener("chunk", (e: MessageEvent) => {

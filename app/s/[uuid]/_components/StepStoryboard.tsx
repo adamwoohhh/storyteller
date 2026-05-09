@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/client/api";
 import { useJob } from "@/lib/client/useJob";
 import { toast } from "sonner";
+import { StepFrame } from "./StepFrame";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
@@ -44,13 +45,20 @@ export function StepStoryboard({
   }
 
   return (
-    <main className="max-w-3xl mx-auto p-8 space-y-6">
-      <h2 className="text-xl font-semibold">分镜</h2>
-      {job.status === "running" && <div>分镜生成中…</div>}
-      <div className="space-y-3">
+    <StepFrame
+      title="分镜小剧场"
+      description="每个节点都是一格画面：上面是剧情，下面是生图提示。"
+      currentStep="storyboard"
+    >
+      {job.status === "running" && (
+        <div className="mb-4 rounded-full bg-secondary px-4 py-2 text-center text-sm font-black">
+          分镜生成中…
+        </div>
+      )}
+      <div className="grid gap-4">
         {data.nodes.map((n: Any, i: number) => (
-          <Card key={n.id} className="p-3 space-y-2">
-            <div className="text-xs text-muted-foreground">节点 {i + 1}</div>
+          <Card key={n.id} className="space-y-3 bg-[#fff8e8] p-4">
+            <div className="story-chip w-fit bg-secondary text-foreground">镜头 {i + 1}</div>
             <Textarea
               rows={3}
               value={n.text}
@@ -67,11 +75,11 @@ export function StepStoryboard({
           </Card>
         ))}
       </div>
-      <div className="flex justify-end">
+      <div className="mt-6 flex justify-end">
         <Button onClick={onNext} disabled={data.nodes.length === 0}>
-          继续 → 画风
+          继续：画风
         </Button>
       </div>
-    </main>
+    </StepFrame>
   );
 }

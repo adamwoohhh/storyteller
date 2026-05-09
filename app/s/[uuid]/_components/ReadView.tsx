@@ -7,29 +7,33 @@ type Any = any;
 export function ReadView({ data, onSwitch }: { data: Any; onSwitch: () => void }) {
   const sorted = [...data.nodes].sort((a: Any, b: Any) => a.orderIndex - b.orderIndex);
   return (
-    <main className="min-h-screen">
-      <header className="sticky top-0 bg-background/90 backdrop-blur border-b z-10 flex items-center justify-between p-3">
-        <h2 className="font-semibold">{data.story.title || "Untitled"}</h2>
+    <main className="story-bg min-h-screen px-4 pb-12">
+      <header className="sticky top-4 z-10 mx-auto flex max-w-4xl items-center justify-between rounded-full border border-[#5a3029]/20 bg-card/90 px-4 py-3 shadow-[0_6px_0_rgb(90_48_41_/_0.14)] backdrop-blur">
+        <h2 className="truncate pr-4 font-black text-foreground">
+          {data.story.title || "Untitled"}
+        </h2>
         <Button variant="outline" onClick={onSwitch}>
           编辑态
         </Button>
       </header>
-      <div className="max-w-2xl mx-auto py-8 space-y-16">
+      <div className="mx-auto max-w-2xl py-12 space-y-16">
         {sorted.map((n: Any) => (
-          <section key={n.id} className="space-y-4">
+          <section key={n.id} className="space-y-5">
             {n.imageId ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={`/api/assets/${n.imageId}`}
                 alt=""
-                className="w-full rounded-lg shadow-md"
+                className="w-full rounded-[2rem] border-2 border-[#5a3029] bg-card shadow-[10px_10px_0_#d9b76f]"
               />
             ) : (
-              <div className="w-full aspect-square bg-muted rounded-lg flex items-center justify-center">
+              <div className="flex aspect-square w-full items-center justify-center rounded-[2rem] border-2 border-dashed border-[#5a3029]/30 bg-card text-sm font-black text-muted-foreground shadow-[10px_10px_0_#d9b76f]">
                 暂无图片
               </div>
             )}
-            <p className="text-lg leading-relaxed whitespace-pre-wrap text-center">{n.text}</p>
+            <p className="rounded-3xl bg-card/80 px-5 py-4 text-center text-lg leading-8 whitespace-pre-wrap text-foreground">
+              {n.text}
+            </p>
           </section>
         ))}
       </div>
