@@ -12,8 +12,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx scripts/migrate.ts",
-    "eval": "tsx evals/runner.ts"
+    "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
+    "eval": "tsx --env-file=.env.local evals/runner.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
