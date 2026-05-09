@@ -51,4 +51,32 @@ describe("config", () => {
     });
     expect(cfg.openai.apiKey).toBe("");
   });
+
+  it("parses modelhub env vars", () => {
+    const cfg = loadConfig({
+      PROVIDER_MODE: "modelhub",
+      MODELHUB_API_KEY: "mh-key",
+      MODELHUB_TEXT_MODEL: "gpt-5.5-2026-04-24",
+      MODELHUB_IMAGE_MODEL: "gpt-image-2",
+      DATABASE_URL: "file:./data/x.db",
+      STORAGE_DIR: "./data/images",
+    });
+
+    expect(cfg.providerMode).toBe("modelhub");
+    expect(cfg.modelhub.apiKey).toBe("mh-key");
+    expect(cfg.modelhub.textModel).toBe("gpt-5.5-2026-04-24");
+    expect(cfg.modelhub.imageModel).toBe("gpt-image-2");
+  });
+
+  it("rejects missing api key when mode is modelhub", () => {
+    expect(() =>
+      loadConfig({
+        PROVIDER_MODE: "modelhub",
+        MODELHUB_TEXT_MODEL: "gpt-5.5-2026-04-24",
+        MODELHUB_IMAGE_MODEL: "gpt-image-2",
+        DATABASE_URL: "file:./data/x.db",
+        STORAGE_DIR: "./data/images",
+      }),
+    ).toThrow(/MODELHUB_API_KEY/);
+  });
 });
