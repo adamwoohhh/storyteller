@@ -31,13 +31,13 @@ export function InputModeStructured({
     set({ characters: next });
   };
   return (
-    <div className="space-y-4 mt-4">
-      <div>
-        <Label>标题（可选）</Label>
+    <div className="mt-4 space-y-5">
+      <div className="space-y-2">
+        <Label className="font-black text-foreground">标题（可选）</Label>
         <Input value={value.title} onChange={(e) => set({ title: e.target.value })} />
       </div>
-      <div>
-        <Label>故事设定</Label>
+      <div className="space-y-2">
+        <Label className="font-black text-foreground">故事设定</Label>
         <Textarea
           rows={4}
           value={value.setting}
@@ -45,11 +45,11 @@ export function InputModeStructured({
           placeholder="例如：森林深处住着一群会说话的动物"
         />
       </div>
-      <div>
-        <Label>角色</Label>
+      <div className="space-y-2">
+        <Label className="font-black text-foreground">角色</Label>
         <div className="space-y-3">
           {value.characters.map((c, i) => (
-            <Card key={i} className="p-3 space-y-2">
+            <Card key={i} className="space-y-3 bg-[#fff8e8] p-4">
               <Input
                 placeholder="名字"
                 value={c.name}
@@ -79,12 +79,12 @@ export function InputModeStructured({
               set({ characters: [...value.characters, { name: "", description: "" }] })
             }
           >
-            + 添加角色
+            添加角色
           </Button>
         </div>
       </div>
-      <div>
-        <Label>起始剧情</Label>
+      <div className="space-y-2">
+        <Label className="font-black text-foreground">起始剧情</Label>
         <Textarea
           rows={3}
           value={value.opening}

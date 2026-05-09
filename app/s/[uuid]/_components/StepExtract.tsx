@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/client/api";
 import { useJob } from "@/lib/client/useJob";
 import { toast } from "sonner";
+import { StepFrame } from "./StepFrame";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
@@ -53,15 +54,19 @@ export function StepExtract({
   }
 
   return (
-    <main className="max-w-3xl mx-auto p-8 space-y-6">
-      <h2 className="text-xl font-semibold">确认角色</h2>
-      <p className="text-sm text-muted-foreground">
-        从你粘贴的故事中提取的角色。可以编辑、删除、添加，或为每个角色上传参考图。
-      </p>
-      {job.status === "running" && <div>提取中…</div>}
-      <div className="space-y-3">
+    <StepFrame
+      title="确认角色"
+      description="从完整故事里捞出主角团，可以编辑、删除，或上传参考图。"
+      currentStep="extract"
+    >
+      {job.status === "running" && (
+        <div className="mb-4 rounded-full bg-secondary px-4 py-2 text-center text-sm font-black">
+          正在提取角色…
+        </div>
+      )}
+      <div className="space-y-4">
         {data.characters.map((c: Any) => (
-          <Card key={c.id} className="p-3 space-y-2">
+          <Card key={c.id} className="space-y-3 bg-[#fff8e8] p-4">
             <Input
               value={c.name}
               onChange={(e) => patchChar(c.id, { name: e.target.value })}
@@ -75,6 +80,7 @@ export function StepExtract({
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
+                className="max-w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-secondary file:px-3 file:py-2 file:font-black file:text-foreground"
                 onChange={(e) => e.target.files?.[0] && uploadRef(c.id, e.target.files[0])}
               />
               {c.userImageId && (
@@ -82,7 +88,7 @@ export function StepExtract({
                 <img
                   src={`/api/assets/${c.userImageId}`}
                   alt=""
-                  className="h-12 w-12 object-cover rounded"
+                  className="h-14 w-14 rounded-2xl border-2 border-[#5a3029]/30 object-cover"
                 />
               )}
               <Button
@@ -97,11 +103,11 @@ export function StepExtract({
           </Card>
         ))}
       </div>
-      <div className="flex justify-end">
+      <div className="mt-6 flex justify-end">
         <Button onClick={onNext} disabled={data.characters.length === 0}>
-          继续 → 分镜
+          继续：分镜
         </Button>
       </div>
-    </main>
+    </StepFrame>
   );
 }

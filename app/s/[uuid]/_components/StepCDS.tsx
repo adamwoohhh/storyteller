@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/client/api";
 import { useJob } from "@/lib/client/useJob";
+import { StepFrame } from "./StepFrame";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
@@ -25,6 +26,7 @@ export function StepCDS({
   useEffect(() => {
     if (job.status === "done") {
       reload();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRenderJob(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -43,42 +45,45 @@ export function StepCDS({
     data.characters.length > 0 && data.characters.every((c: Any) => c.confirmed);
 
   return (
-    <main className="max-w-3xl mx-auto p-8 space-y-6">
-      <h2 className="text-xl font-semibold">Character Design Sheet</h2>
-      <p className="text-sm text-muted-foreground">
-        编辑每个角色的 4 个字段，生成参考图，确认后即可批量生成插图。
-      </p>
-      <div className="space-y-4">
+    <StepFrame
+      title="角色设计卡"
+      description="编辑每个角色的外貌、服饰、特征和风格，确认后就能批量生成插图。"
+      currentStep="cds"
+    >
+      <div className="space-y-5">
         {data.characters.map((c: Any) => (
-          <Card key={c.id} className="p-4 space-y-3">
-            <div className="font-medium">{c.name}</div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>外貌</Label>
+          <Card key={c.id} className="space-y-4 bg-[#fff8e8] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-lg font-black">{c.name}</div>
+              {c.confirmed && <span className="story-chip-active story-chip">已确认</span>}
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="font-black">外貌</Label>
                 <Textarea
                   rows={3}
                   value={c.cdsAppearance}
                   onChange={(e) => patch(c.id, { cdsAppearance: e.target.value })}
                 />
               </div>
-              <div>
-                <Label>服饰</Label>
+              <div className="space-y-2">
+                <Label className="font-black">服饰</Label>
                 <Textarea
                   rows={3}
                   value={c.cdsOutfit}
                   onChange={(e) => patch(c.id, { cdsOutfit: e.target.value })}
                 />
               </div>
-              <div>
-                <Label>特征</Label>
+              <div className="space-y-2">
+                <Label className="font-black">特征</Label>
                 <Textarea
                   rows={3}
                   value={c.cdsTraits}
                   onChange={(e) => patch(c.id, { cdsTraits: e.target.value })}
                 />
               </div>
-              <div>
-                <Label>风格</Label>
+              <div className="space-y-2">
+                <Label className="font-black">风格</Label>
                 <Textarea
                   rows={3}
                   value={c.cdsStyle}
@@ -90,12 +95,12 @@ export function StepCDS({
               {c.cdsImageId ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={`/api/assets/${c.cdsImageId}`}
-                  alt=""
-                  className="h-32 w-32 object-cover rounded border"
+                src={`/api/assets/${c.cdsImageId}`}
+                alt=""
+                  className="h-32 w-32 rounded-3xl border-2 border-[#5a3029]/30 object-cover shadow-[0_5px_0_rgb(90_48_41_/_0.18)]"
                 />
               ) : (
-                <div className="h-32 w-32 rounded border flex items-center justify-center text-xs text-muted-foreground">
+                <div className="flex h-32 w-32 items-center justify-center rounded-3xl border-2 border-dashed border-[#5a3029]/30 bg-card text-xs font-black text-muted-foreground">
                   未生成
                 </div>
               )}
@@ -118,18 +123,18 @@ export function StepCDS({
                   onClick={() => patch(c.id, { confirmed: !c.confirmed })}
                   disabled={!c.cdsImageId}
                 >
-                  {c.confirmed ? "✓ 已确认" : "确认"}
+                  {c.confirmed ? "已确认" : "确认"}
                 </Button>
               </div>
             </div>
           </Card>
         ))}
       </div>
-      <div className="flex justify-end">
+      <div className="mt-6 flex justify-end">
         <Button onClick={onNext} disabled={!allConfirmed}>
           开始生成插图
         </Button>
       </div>
-    </main>
+    </StepFrame>
   );
 }

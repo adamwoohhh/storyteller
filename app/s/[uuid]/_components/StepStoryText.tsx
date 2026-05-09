@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { api } from "@/lib/client/api";
 import { useJob } from "@/lib/client/useJob";
 import { toast } from "sonner";
+import { StepFrame } from "./StepFrame";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
@@ -47,6 +48,7 @@ export function StepStoryText({
   }, [job.status]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEdited(data.story.storyText ?? "");
   }, [data.story.storyText]);
 
@@ -72,10 +74,13 @@ export function StepStoryText({
   const isStreaming = job.status === "running";
 
   return (
-    <main className="max-w-3xl mx-auto p-8 space-y-6">
-      <h2 className="text-xl font-semibold">故事文本</h2>
+    <StepFrame
+      title="故事文本"
+      description="先把故事揉成一篇完整草稿，再决定下一幕怎么分镜。"
+      currentStep="story"
+    >
       {isStreaming ? (
-        <div className="whitespace-pre-wrap border rounded p-4 bg-muted/20 min-h-[200px]">
+        <div className="min-h-[220px] whitespace-pre-wrap rounded-3xl border-2 border-dashed border-[#5a3029]/30 bg-[#fff8e8] p-5 leading-7">
           {liveText}
           <span className="animate-pulse">▍</span>
         </div>
@@ -84,13 +89,15 @@ export function StepStoryText({
       )}
       {!isStreaming && (
         <>
-          <div className="flex gap-2">
+          <div className="mt-4 flex gap-2">
             <Button variant="outline" size="sm" onClick={saveEdit} disabled={saving}>
               {saving ? "保存中…" : "保存编辑"}
             </Button>
           </div>
-          <div className="space-y-2 border-t pt-4">
-            <Label>修订提示词（让模型按要求改写整篇）</Label>
+          <div className="mt-5 space-y-3 rounded-3xl border border-border bg-[#fff8e8] p-4">
+            <Label className="font-black text-foreground">
+              修订提示词（让模型按要求改写整篇）
+            </Label>
             <Input
               value={revisePrompt}
               onChange={(e) => setRevisePrompt(e.target.value)}
@@ -104,13 +111,13 @@ export function StepStoryText({
               按提示词重新生成
             </Button>
           </div>
-          <div className="flex justify-end">
+          <div className="mt-6 flex justify-end">
             <Button onClick={onNext} disabled={!edited.trim()}>
-              继续 → 分镜
+              继续：分镜
             </Button>
           </div>
         </>
       )}
-    </main>
+    </StepFrame>
   );
 }

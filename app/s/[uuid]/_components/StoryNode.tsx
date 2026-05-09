@@ -24,6 +24,7 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
 
   useEffect(() => {
     if (job.status === "done" && jobId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setJobId(null);
       data.onChanged();
     }
@@ -31,9 +32,9 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
   }, [job.status]);
 
   return (
-    <div className="bg-white border rounded-md shadow w-72">
+    <div className="w-72 overflow-hidden rounded-[1.5rem] border-2 border-[#5a3029] bg-card shadow-[7px_7px_0_#bed18a]">
       <Handle type="target" position={Position.Top} />
-      <div className="aspect-square w-full bg-muted overflow-hidden">
+      <div className="aspect-square w-full overflow-hidden bg-muted">
         {data.imageId ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -42,13 +43,13 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+          <div className="flex h-full w-full items-center justify-center text-xs font-black text-muted-foreground">
             {job.status === "running" ? "生成中…" : "暂无图片"}
           </div>
         )}
       </div>
-      <div className="p-3 space-y-2">
-        <div className="text-sm whitespace-pre-wrap line-clamp-4">{data.text}</div>
+      <div className="space-y-3 p-4">
+        <div className="line-clamp-4 whitespace-pre-wrap text-sm leading-6">{data.text}</div>
         <div className="flex gap-2">
           <Button
             size="sm"
