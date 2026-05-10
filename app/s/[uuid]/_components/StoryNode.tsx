@@ -19,6 +19,7 @@ import {
   type PromptPreviewCharacter,
   type PromptPreviewStory,
 } from "./render-prompt-preview";
+import { type GalleryItem, ImageGalleryThumb } from "./image-gallery";
 
 export interface StoryNodeData {
   id: string;
@@ -28,6 +29,7 @@ export interface StoryNodeData {
   imageId: string | null;
   story: PromptPreviewStory;
   allCharacters: PromptPreviewCharacter[];
+  galleryItems: GalleryItem[];
   onChanged: () => void;
 }
 
@@ -84,9 +86,9 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
       <Handle type="target" position={Position.Top} />
       <div className="aspect-square w-full overflow-hidden bg-muted">
         {data.imageId ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={`/api/assets/${data.imageId}`}
+          <ImageGalleryThumb
+            items={data.galleryItems}
+            assetId={data.imageId}
             alt=""
             className="w-full h-full object-cover"
           />
@@ -145,9 +147,9 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
                       className="flex items-center gap-3 rounded-2xl border border-border bg-[#fff8e8] p-3"
                     >
                       {reference.cdsImageId ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={`/api/assets/${reference.cdsImageId}`}
+                        <ImageGalleryThumb
+                          items={data.galleryItems}
+                          assetId={reference.cdsImageId}
                           alt=""
                           className="size-12 rounded-2xl border border-[#5a3029]/20 object-cover"
                         />

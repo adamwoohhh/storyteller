@@ -15,6 +15,7 @@ import { StoryNodeView } from "./StoryNode";
 import { api } from "@/lib/client/api";
 import { getEditorNodePosition, getOrganizedNodePositions } from "./editor-layout";
 import { toast } from "sonner";
+import { buildStoryGalleryItems } from "./image-gallery";
 
 const nodeTypes = { story: StoryNodeView };
 const NODE_WIDTH = 288;
@@ -38,6 +39,7 @@ export function EditorCanvas({
     () => [...data.nodes].sort((a: Any, b: Any) => a.orderIndex - b.orderIndex),
     [data.nodes],
   );
+  const galleryItems = useMemo(() => buildStoryGalleryItems(data), [data]);
   const initialNodes = useMemo<Node[]>(
     () =>
       sortedNodes.map((n: Any, index: number) => ({
@@ -52,10 +54,11 @@ export function EditorCanvas({
           imageId: n.imageId,
           story: data.story,
           allCharacters: data.characters,
+          galleryItems,
           onChanged: reload,
         },
       })),
-    [sortedNodes, data.story, data.characters, reload],
+    [sortedNodes, data.story, data.characters, galleryItems, reload],
   );
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const canvasRef = useRef<HTMLDivElement>(null);

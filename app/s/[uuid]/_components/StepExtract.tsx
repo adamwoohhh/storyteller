@@ -8,6 +8,7 @@ import { api } from "@/lib/client/api";
 import { useJob } from "@/lib/client/useJob";
 import { toast } from "sonner";
 import { StepFrame } from "./StepFrame";
+import { buildStoryGalleryItems, ImageGalleryThumb } from "./image-gallery";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
@@ -23,6 +24,7 @@ export function StepExtract({
 }) {
   const [jobId, setJobId] = useState<string | null>(null);
   const job = useJob(jobId);
+  const galleryItems = buildStoryGalleryItems(data);
 
   useEffect(() => {
     if (data.characters.length === 0 && jobId === null) {
@@ -84,9 +86,9 @@ export function StepExtract({
                 onChange={(e) => e.target.files?.[0] && uploadRef(c.id, e.target.files[0])}
               />
               {c.userImageId && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={`/api/assets/${c.userImageId}`}
+                <ImageGalleryThumb
+                  items={galleryItems}
+                  assetId={c.userImageId}
                   alt=""
                   className="h-14 w-14 rounded-2xl border-2 border-[#5a3029]/30 object-cover"
                 />

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { api } from "@/lib/client/api";
 import { useJob } from "@/lib/client/useJob";
 import { StepFrame } from "./StepFrame";
+import { buildStoryGalleryItems, ImageGalleryThumb } from "./image-gallery";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
@@ -22,6 +23,7 @@ export function StepCDS({
 }) {
   const [renderJob, setRenderJob] = useState<{ id: string; charId: string } | null>(null);
   const job = useJob(renderJob?.id ?? null);
+  const galleryItems = buildStoryGalleryItems(data);
 
   useEffect(() => {
     if (job.status === "done") {
@@ -93,10 +95,10 @@ export function StepCDS({
             </div>
             <div className="flex items-center gap-3">
               {c.cdsImageId ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                src={`/api/assets/${c.cdsImageId}`}
-                alt=""
+                <ImageGalleryThumb
+                  items={galleryItems}
+                  assetId={c.cdsImageId}
+                  alt=""
                   className="h-32 w-32 rounded-3xl border-2 border-[#5a3029]/30 object-cover shadow-[0_5px_0_rgb(90_48_41_/_0.18)]"
                 />
               ) : (
