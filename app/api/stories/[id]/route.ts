@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getRuntime } from "@/lib/runtime";
-import { stories, characters, nodes, assets } from "@/lib/db/schema";
+import { stories } from "@/lib/db/schema";
+import { getActiveStoryBundle, logicallyDeleteStory } from "@/lib/stories/admin";
 
 export const runtime = "nodejs";
 
@@ -13,17 +14,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   // 从 params (path占位符) 中获取故事 id
   const { id } = await params;
   const { db } = await getRuntime();
-  const story = db.select().from(stories).where(eq(stories.id, id)).get();
-  if (!story) return NextResponse.json({ error: "not found" }, { status: 404 });
-  const cs = db.select().from(characters).where(eq(characters.storyId, id)).all();
-  const ns = db
-    .select()
-    .from(nodes)
-    .where(eq(nodes.storyId, id))
-    .all()
-    .sort((a, b) => a.orderIndex - b.orderIndex);
-  const as = db.select().from(assets).where(eq(assets.storyId, id)).all();
-  return NextResponse.json({ story, characters: cs, nodes: ns, assets: as });
+  const bundle = getActiveStoryBundle(db, id);
+  if (!bundle) return NextResponse.json({ error: "not found" }, { status: 404 });
+  return NextResponse.json(bundle);
 }
 
 const StoryPatch = z.object({
@@ -43,4 +36,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .where(eq(stories.id, id))
     .run();
   return NextResponse.json(db.select().from(stories).where(eq(stories.id, id)).get());
+}
+
+/**
+ * 逻辑删除故事，保留数据库记录和关联数据
+ */
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const { db } = await getRuntime();
+  const result = logicallyDeleteStory(db, id);
+  if (!result) return NextResponse.json({ error: "not found" }, { status: 404 });
+  return NextResponse.json(result);
 }

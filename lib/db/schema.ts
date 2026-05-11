@@ -17,6 +17,7 @@ export const stories = sqliteTable("stories", {
     .default("draft"),
   createdAt: integer("created_at").notNull().default(sql`(unixepoch())`),
   updatedAt: integer("updated_at").notNull().default(sql`(unixepoch())`),
+  deletedAt: integer("deleted_at"),
 });
 
 export const assets = sqliteTable("assets", {

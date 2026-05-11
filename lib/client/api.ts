@@ -15,9 +15,11 @@ async function jsonReq<T>(method: string, url: string, body?: unknown): Promise<
 type Any = any;
 
 export const api = {
+  listStories: () => jsonReq<{ stories: Any[] }>("GET", "/api/stories"),
   createStory: (body: Any) => jsonReq<{ id: string }>("POST", "/api/stories", body),
   getStory: (id: string) => jsonReq<Any>("GET", `/api/stories/${id}`),
   patchStory: (id: string, body: Any) => jsonReq<Any>("PATCH", `/api/stories/${id}`, body),
+  deleteStory: (id: string) => jsonReq<{ ok: true }>("DELETE", `/api/stories/${id}`),
   generateText: (id: string) =>
     jsonReq<{ jobId: string }>("POST", `/api/stories/${id}/generate-text`),
   reviseText: (id: string, revisePrompt: string) =>

@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { getRuntime } from "@/lib/runtime";
 import { stories, characters as charactersTable } from "@/lib/db/schema";
+import { listActiveStories } from "@/lib/stories/admin";
 
 export const runtime = "nodejs";
 
@@ -22,6 +23,14 @@ const Schema = z.object({
     )
     .default([]),
 });
+
+/**
+ * 查询未删除的故事列表
+ */
+export async function GET() {
+  const { db } = await getRuntime();
+  return NextResponse.json({ stories: listActiveStories(db) });
+}
 
 /**
  * 创建故事，入口api
