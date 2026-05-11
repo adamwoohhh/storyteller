@@ -10,10 +10,18 @@ import ReactFlow, {
   type Edge,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { BookOpen, LayoutDashboard, Rows3 } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { StoryNodeView } from "./StoryNode";
 import { api } from "@/lib/client/api";
 import { useJob } from "@/lib/client/useJob";
+import { cn } from "@/lib/utils";
+import {
+  ADMIN_STORIES_HREF,
+  getStoryDisplayTitle,
+  getStoryModeAction,
+} from "@/lib/story-navigation";
 import { getEditorNodePosition, getOrganizedNodePositions } from "./editor-layout";
 import { toast } from "sonner";
 import { buildStoryGalleryItems } from "./image-gallery";
@@ -79,6 +87,7 @@ export function EditorCanvas({
   const canvasRef = useRef<HTMLDivElement>(null);
   const flowRef = useRef<ReactFlowInstance | null>(null);
   const [organizing, setOrganizing] = useState(false);
+  const modeAction = getStoryModeAction("edit");
 
   useEffect(() => {
     setNodes(initialNodes);
@@ -178,29 +187,44 @@ export function EditorCanvas({
 
   return (
     <div className="story-bg flex h-screen flex-col p-3">
-      <header className="z-10 mx-auto mb-3 flex w-full max-w-5xl items-center justify-between rounded-full border border-[#5a3029]/20 bg-card/90 px-4 py-3 shadow-[0_6px_0_rgb(90_48_41_/_0.14)] backdrop-blur">
-        <h2 className="truncate pr-4 font-black text-foreground">
-          {data.story.title || "Untitled"}
+      <header className="z-10 mb-2 flex w-full items-center justify-between gap-3 rounded-2xl border border-[#5a3029]/15 bg-card/85 px-3 py-2 shadow-[0_3px_0_rgb(90_48_41_/_0.12)] backdrop-blur sm:px-4">
+        <h2 className="min-w-0 truncate text-sm font-black text-foreground sm:text-base">
+          {getStoryDisplayTitle(data.story.title)}
         </h2>
-        <div className="flex gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {isRenderingScenes && (
-            <div className="flex items-center rounded-full border border-[#5a3029]/20 bg-secondary px-3 py-1 text-xs font-black text-foreground">
+            <div className="hidden items-center rounded-full border border-[#5a3029]/20 bg-secondary px-3 py-1 text-xs font-black text-foreground sm:flex">
               生成插图{" "}
               {renderProgressLabel({ progress: renderJob.progress, totalNodes: sortedNodes.length })}
             </div>
           )}
-          <Button variant="secondary" onClick={organizeNodes} disabled={organizing}>
-            {organizing ? "整理中…" : "整理节点"}
-          </Button>
-          <Button variant="outline" onClick={onSwitch}>
-            阅读态
+          <Link
+            href={ADMIN_STORIES_HREF}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            <LayoutDashboard className="size-4" />
+            <span className="hidden sm:inline">管理页</span>
+          </Link>
+          <Button variant="outline" size="sm" onClick={onSwitch}>
+            <BookOpen className="size-4" />
+            {modeAction.label}
           </Button>
         </div>
       </header>
       <div
         ref={canvasRef}
-        className="min-h-0 flex-1 overflow-hidden rounded-[2rem] border-2 border-[#5a3029]/20 bg-[#fff8e8]/70"
+        className="relative min-h-0 flex-1 overflow-hidden rounded-[2rem] border-2 border-[#5a3029]/20 bg-[#fff8e8]/70"
       >
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={organizeNodes}
+          disabled={organizing}
+          className="absolute right-4 top-4 z-20 shadow-[0_4px_0_rgb(90_48_41_/_0.18)]"
+        >
+          <Rows3 className="size-4" />
+          {organizing ? "整理中…" : "整理节点"}
+        </Button>
         <ReactFlow
           nodes={nodes}
           edges={edges}

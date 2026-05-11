@@ -1,9 +1,13 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { LayoutDashboard } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/client/api";
+import { cn } from "@/lib/utils";
+import { ADMIN_STORIES_HREF } from "@/lib/story-navigation";
 import { toast } from "sonner";
 import { InputModeStructured } from "./_components/InputModeStructured";
 import { InputModePaste } from "./_components/InputModePaste";
@@ -63,11 +67,17 @@ export default function Home() {
   return (
     <main className="story-bg flex min-h-screen items-center justify-center px-4 py-10 sm:px-6">
       <section className="mx-auto w-full max-w-3xl text-center">
-        <div className="mb-5 inline-flex items-center gap-3 rounded-full border border-[#5a3029]/20 bg-card/80 px-4 py-2 text-sm font-black text-primary shadow-[0_4px_0_rgb(90_48_41_/_0.16)]">
-          <span className="flex size-9 items-center justify-center rounded-2xl border-2 border-[#5a3029] bg-secondary">
-            <span className="size-4 rounded-full bg-primary" />
+        <div className="mb-5 flex flex-col items-center justify-between gap-3 sm:flex-row">
+          <span className="inline-flex items-center gap-3 rounded-full border border-[#5a3029]/20 bg-card/80 px-4 py-2 text-sm font-black text-primary shadow-[0_4px_0_rgb(90_48_41_/_0.16)]">
+            <span className="flex size-9 items-center justify-center rounded-2xl border-2 border-[#5a3029] bg-secondary">
+              <span className="size-4 rounded-full bg-primary" />
+            </span>
+            Storyteller
           </span>
-          Storyteller
+          <Link href={ADMIN_STORIES_HREF} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+            <LayoutDashboard className="size-4" />
+            管理页
+          </Link>
         </div>
 
         <div className="story-panel p-5 text-left sm:p-8 lg:p-10">
