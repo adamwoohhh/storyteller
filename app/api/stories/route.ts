@@ -23,10 +23,17 @@ const Schema = z.object({
     .default([]),
 });
 
+/**
+ * 创建故事，入口api
+ */
 export async function POST(req: NextRequest) {
+  // runtime 封装了一些全局单例（比如数据库对象）
   const { db } = await getRuntime();
+  // 根据 schema 解析请求体
   const body = Schema.parse(await req.json());
+  // 生成 story id
   const id = randomUUID();
+  // 插入数据库：故事表
   db.insert(stories)
     .values({
       id,
@@ -38,6 +45,7 @@ export async function POST(req: NextRequest) {
       status: body.inputMode === "paste" && body.storyText ? "text_done" : "draft",
     })
     .run();
+  // 解析请求体中的角色信息，插入角色表
   for (const c of body.characters) {
     const cid = randomUUID();
     db.insert(charactersTable)
@@ -50,5 +58,6 @@ export async function POST(req: NextRequest) {
       })
       .run();
   }
+  // 返回 id
   return NextResponse.json({ id });
 }

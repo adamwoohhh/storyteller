@@ -7,13 +7,16 @@ export async function generateStoryText(args: {
   db: DB;
   provider: TextProvider;
   storyId: string;
+  // 是否是修改 prompt 重新生成的场景
   revisePrompt?: string;
   onChunk: (chunk: string) => void;
   signal?: AbortSignal;
 }): Promise<string> {
   const { db, provider, storyId, revisePrompt, onChunk, signal } = args;
+  // 从 db 查询故事基础信息
   const row = db.select().from(stories).where(eq(stories.id, storyId)).get();
   if (!row) throw new Error(`story not found: ${storyId}`);
+  // 从 db 查询角色信息
   const charRows = db
     .select()
     .from(charactersTable)
@@ -30,6 +33,7 @@ export async function generateStoryText(args: {
     : undefined;
 
   let full = "";
+  // 调用模型接口生成故事正文
   for await (const chunk of provider.generateStory(input, opts)) {
     if (signal?.aborted) throw new Error("aborted");
     full += chunk;

@@ -14,6 +14,9 @@ import { ReadView } from "./ReadView";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Data = any;
 
+/**
+ * 创作流程分步调度
+ */
 export function StepShell({
   storyId,
   step,
@@ -27,6 +30,7 @@ export function StepShell({
   const sp = useSearchParams();
   const [data, setData] = useState<Data | null>(null);
 
+  // 查询故事信息
   const reload = useCallback(
     async () => api.getStory(storyId).then(setData),
     [storyId],
@@ -49,6 +53,7 @@ export function StepShell({
   const goto = (s: string) => router.push(`/s/${storyId}?step=${s}`);
   const gotoMode = (m: "edit" | "read") => router.push(`/s/${storyId}?mode=${m}`);
 
+  // 如果不存在 step 参数且存在mode参数，则进入阅读/编辑切换模式
   if (sp.get("mode") && !sp.get("step")) {
     return mode === "read" ? (
       <ReadView data={data} onSwitch={() => gotoMode("edit")} />
@@ -57,6 +62,7 @@ export function StepShell({
     );
   }
 
+  // 进入故事创作流程
   switch (step) {
     case "story":
       return (

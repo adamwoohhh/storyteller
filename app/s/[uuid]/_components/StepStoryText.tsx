@@ -27,6 +27,7 @@ export function StepStoryText({
   const [revisePrompt, setRevisePrompt] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // 如果故事正文未生成，并且是结构化创作模式，则自动触发生成文本的任务
   useEffect(() => {
     if (
       !data.story.storyText &&

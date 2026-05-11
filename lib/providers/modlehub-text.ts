@@ -73,6 +73,9 @@ export class ModelHubTextProvider implements TextProvider {
     return nodes.map((n, i) => ({ ...n, order_index: i }));
   }
 
+  /**
+   * 生成角色设计卡 CDS 提示词
+   */
   async generateCDS(args: CDSGenArgs): Promise<CDSDraft[]> {
     const content = await this.chat(
       [

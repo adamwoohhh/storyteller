@@ -11,6 +11,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     rt,
     storyId: id,
     kind: "generate_story",
+    // 通过任务队列执行，当任务开始时执行下面的代码
     fn: async (ctx) => {
       const out = await generateStoryText({
         db: rt.db,

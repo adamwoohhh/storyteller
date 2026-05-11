@@ -21,7 +21,9 @@ export interface Runtime {
 
 let _runtime: Runtime | null = null;
 let _migrated = false;
-
+/**
+ * 获取全局单例
+ */
 export async function getRuntime(): Promise<Runtime> {
   if (_runtime) return _runtime;
   const cfg = getConfig();
@@ -49,6 +51,7 @@ export async function startJob(args: {
   targetId?: string;
   fn: (ctx: JobContext) => Promise<unknown>;
 }): Promise<string> {
+  // 生成 job id，向 job 表里插入一条记录
   const id = randomUUID();
   args.rt.db
     .insert(jobs)
@@ -59,6 +62,7 @@ export async function startJob(args: {
       targetId: args.targetId ?? null,
     })
     .run();
+  // void 显示忽略 runJob 返回的 Promise，不用等它执行完直接返回
   void runJob({
     db: args.rt.db,
     queue: args.rt.queue,

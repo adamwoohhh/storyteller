@@ -6,7 +6,11 @@ import { stories, characters, nodes, assets } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 
+/**
+ * 查询故事，包括故事基本信息、角色、节点、素材等
+ */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  // 从 params (path占位符) 中获取故事 id
   const { id } = await params;
   const { db } = await getRuntime();
   const story = db.select().from(stories).where(eq(stories.id, id)).get();
@@ -27,6 +31,9 @@ const StoryPatch = z.object({
   title: z.string().optional(),
 });
 
+/**
+ * 更新故事基础信息
+ */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = StoryPatch.parse(await req.json());

@@ -10,6 +10,9 @@ export interface JobContext {
   publish: (e: SseEvent) => void;
 }
 
+/**
+ * 使用队列管理器执行一个任务，并根据任务执行状态修改 bd 中的记录，同时通过 sse bus 向前端推送任务执行的状态和结果
+ */
 export async function runJob<T>(args: {
   db: DB;
   queue: JobQueue;
@@ -22,6 +25,7 @@ export async function runJob<T>(args: {
   let caught: unknown = null;
 
   await queue.enqueue(jobId, async (signal) => {
+    // 更新 db 里的任务状态为 running
     db.update(jobs)
       .set({ status: "running", updatedAt: sql`(unixepoch())` })
       .where(eq(jobs.id, jobId))

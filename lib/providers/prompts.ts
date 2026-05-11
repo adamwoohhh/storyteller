@@ -1,11 +1,20 @@
 import type { StoryInput, ReviseOpts, StoryboardOpts, CDSGenArgs } from "./types";
 
+export const BASE_LANGUAGE_PROMPT = `使用用户偏好的语言（中文或英文）生成内容，保持与用户输入一致，除非用户明确要求改变语言`;
+
+/**
+ * 生成故事正文的系统提示词，目前设定为【中文儿童绘本作家】，后续对故事类型有要求时可优化这里
+ */
 export const STORY_SYSTEM = `你是一位中文儿童绘本作家，擅长把简单设定写成温暖、有画面感、起承转合分明的故事。要求：
 - 叙述清晰、段落分明
 - 突出角色形象和场景细节，便于后续生成插图
 - 不使用敏感、暴力或恐怖内容
 - 直接输出故事正文，不要前后缀`;
 
+/**
+ * 把故事设定、角色信息、起始剧情拼接成用户提示词；
+ * 如果是修改 prompt 重新生成的场景，则把上一稿故事和修改要求拼接成用户提示词
+ */
 export function buildStoryUser(input: StoryInput, revise?: ReviseOpts): string {
   if (revise) {
     return `这是上一稿故事：\n---\n${revise.previousStory}\n---\n请按以下要求修改并完整重写故事：${revise.revisePrompt}`;
@@ -15,6 +24,10 @@ export function buildStoryUser(input: StoryInput, revise?: ReviseOpts): string {
   return `故事设定：${input.setting}\n角色：\n${chars}\n起始剧情：${input.opening}\n请据此创作完整故事。`;
 }
 
+/**
+ * 故事分镜的系统提示词
+ * - TODO: 应该加上用户偏好语言约束，以用户输入的语言约束输出的语言
+ */
 export const STORYBOARD_SYSTEM = `你是一位绘本分镜师。把给定故事文本切分成节点，每个节点附一段专为生图模型优化的英文 image_prompt（以视觉细节为主：构图/动作/表情/光线/场景）。`;
 
 export function buildStoryboardUser(storyText: string, opts: StoryboardOpts): string {
@@ -59,6 +72,7 @@ export const STORYBOARD_SCHEMA = {
   strict: true,
 };
 
+// 角色提取
 export const EXTRACT_SYSTEM = `从给定中文故事中提取主要角色（最多 5 个），每个角色给出名字和一两句外观/性格描述。`;
 export const EXTRACT_SCHEMA = {
   name: "Characters",
@@ -81,6 +95,7 @@ export const EXTRACT_SCHEMA = {
   strict: true,
 };
 
+// 生成角色设计卡 CDS 提示词
 export const CDS_SYSTEM = `为每个角色生成 Character Design Sheet（CDS）。每个角色四个字段（appearance/outfit/traits/style），描述要为后续生图模型友好：具体、可视、避免抽象词。所有 CDS 都要符合给定的全局画风。`;
 export function buildCDSUser(args: CDSGenArgs): string {
   const chars = args.characters.map((c) => `- ${c.id} ${c.name}: ${c.description}`).join("\n");
