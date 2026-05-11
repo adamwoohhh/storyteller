@@ -62,9 +62,11 @@ export async function startBatchRenderCharacters<T extends CharacterCDSState>({
   return Promise.all(
     targets.map(async (character) => {
       const draft = drafts?.[character.id];
+      // 如果提示词有修改，先保存
       if (draft && patchCharacter) {
         await patchCharacter(character.id, draft);
       }
+      // 生成并渲染角色参考图（仅返回job_id）
       const result = await renderCharacter(character.id);
       return { characterId: character.id, jobId: result.jobId };
     }),

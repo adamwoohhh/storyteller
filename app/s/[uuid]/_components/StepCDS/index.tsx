@@ -1,11 +1,12 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/client/api";
 import { useJob } from "@/lib/client/useJob";
+import { toast } from "sonner";
 import { StepFrame } from "../StepFrame";
 import { buildStoryGalleryItems, ImageGalleryThumb } from "../image-gallery";
 import {
@@ -66,6 +67,15 @@ export function StepCDS({
     await reload();
   }, [reload]);
 
+  const markRenderError = useCallback((characterId: string, error?: string) => {
+    setRenderJobs((current) => {
+      const next = { ...current };
+      delete next[characterId];
+      return next;
+    });
+    toast.error(error ?? "角色参考图生成失败，请稍后重试");
+  }, []);
+
   async function startBatchRender() {
     setBatchSaving(true);
     try {
@@ -112,14 +122,6 @@ export function StepCDS({
       description="确认角色提示词后批量生成参考图；生成完成会自动采纳，也可以编辑提示词后重新生成。"
       currentStep="cds"
     >
-      {Object.entries(renderJobs).map(([characterId, jobId]) => (
-        <RenderJobWatcher
-          key={`${characterId}-${jobId}`}
-          characterId={characterId}
-          jobId={jobId}
-          onDone={markRenderDone}
-        />
-      ))}
       <div className="space-y-5">
         {characters.map((c: Any) => (
           <CharacterCDSCard
@@ -135,6 +137,8 @@ export function StepCDS({
               setDraftEdits((current) => ({ ...current, [c.id]: draft }))
             }
             onRender={render}
+            onRenderDone={markRenderDone}
+            onRenderError={markRenderError}
           />
         ))}
       </div>
@@ -167,25 +171,6 @@ function toCDSDraft(character: Any): CDSDraft {
   };
 }
 
-function RenderJobWatcher({
-  characterId,
-  jobId,
-  onDone,
-}: {
-  characterId: string;
-  jobId: string;
-  onDone: (characterId: string) => Promise<void>;
-}) {
-  const job = useJob(jobId);
-
-  useEffect(() => {
-    if (job.status !== "done") return;
-    onDone(characterId).catch(() => {});
-  }, [characterId, job.status, onDone]);
-
-  return null;
-}
-
 function CharacterCDSCard({
   character,
   draft,
@@ -196,6 +181,8 @@ function CharacterCDSCard({
   hasActiveRender,
   onDraftChange,
   onRender,
+  onRenderDone,
+  onRenderError,
 }: {
   character: Any;
   draft: CDSDraft;
@@ -206,12 +193,29 @@ function CharacterCDSCard({
   hasActiveRender: boolean;
   onDraftChange: (draft: CDSDraft) => void;
   onRender: (id: string, draft: CDSDraft) => Promise<void>;
+  onRenderDone: (characterId: string) => Promise<void>;
+  onRenderError: (characterId: string, error?: string) => void;
 }) {
+  const job = useJob(renderJobId);
+  const handledJobIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!renderJobId || handledJobIdRef.current === renderJobId) return;
+    if (job.status === "done") {
+      handledJobIdRef.current = renderJobId;
+      onRenderDone(character.id).catch(() => {});
+    }
+    if (job.status === "error") {
+      handledJobIdRef.current = renderJobId;
+      onRenderError(character.id, job.error);
+    }
+  }, [character.id, job.error, job.status, onRenderDone, onRenderError, renderJobId]);
+
   function updateDraft(field: keyof CDSDraft, value: string) {
     onDraftChange({ ...draft, [field]: value });
   }
 
-  const isRendering = renderJobId !== null;
+  const isRendering = renderJobId !== null && job.status !== "error";
 
   return (
     <Card className="space-y-4 bg-[#fff8e8] p-4">
