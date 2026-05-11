@@ -38,5 +38,6 @@ EVAL_JUDGE_MODEL=gpt-5 pnpm eval storyboard
 
 ## 设计与计划
 
+- 设计准则：`docs/design-principles.md`
 - 设计：`docs/superpowers/specs/2026-05-08-storyteller-design.md`
 - 实现计划：`docs/superpowers/plans/2026-05-08-storyteller.md`
