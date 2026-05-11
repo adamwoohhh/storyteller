@@ -27,6 +27,7 @@ export interface StoryNodeData {
   characters: string;
   imagePrompt: string;
   imageId: string | null;
+  isRendering?: boolean;
   story: PromptPreviewStory;
   allCharacters: PromptPreviewCharacter[];
   galleryItems: GalleryItem[];
@@ -81,6 +82,8 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
     setOpen(nextOpen);
   }
 
+  const isNodeRendering = data.isRendering || (!!jobId && job.status === "running");
+
   return (
     <div className="w-72 overflow-hidden rounded-[1.5rem] border-2 border-[#5a3029] bg-card shadow-[7px_7px_0_#bed18a]">
       <Handle type="target" position={Position.Top} />
@@ -94,7 +97,7 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs font-black text-muted-foreground">
-            {job.status === "running" ? "生成中…" : "暂无图片"}
+            {isNodeRendering ? "生成中…" : "暂无图片"}
           </div>
         )}
       </div>
@@ -106,7 +109,7 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
             variant="outline"
             className="nodrag nopan"
             onClick={() => changeOpen(true)}
-            disabled={!!jobId && job.status === "running"}
+            disabled={isNodeRendering}
           >
             重生图
           </Button>

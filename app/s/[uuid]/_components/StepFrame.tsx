@@ -6,7 +6,6 @@ const steps = [
   { id: "storyboard", label: "分镜" },
   { id: "style", label: "画风" },
   { id: "cds", label: "角色图" },
-  { id: "render", label: "插图" },
 ] as const;
 
 export type WorkflowStep = (typeof steps)[number]["id"];

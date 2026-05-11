@@ -7,7 +7,6 @@ import { StepExtract } from "./StepExtract";
 import { StepStoryboard } from "./StepStoryboard";
 import { StepArtStyle } from "./StepArtStyle";
 import { StepCDS } from "./StepCDS";
-import { StepRender } from "./StepRender";
 import { EditorCanvas } from "./EditorCanvas";
 import { ReadView } from "./ReadView";
 
@@ -79,15 +78,7 @@ export function StepShell({
     case "style":
       return <StepArtStyle data={data} onNext={() => goto("cds")} reload={reload} />;
     case "cds":
-      return <StepCDS data={data} onNext={() => goto("render")} reload={reload} />;
-    case "render":
-      return (
-        <StepRender
-          data={data}
-          onDone={() => router.push(`/s/${storyId}?mode=edit`)}
-          reload={reload}
-        />
-      );
+      return <StepCDS data={data} onNext={() => gotoMode("edit")} reload={reload} />;
     default: {
       const s = data.story.status as string;
       const map: Record<string, string> = {
@@ -95,8 +86,8 @@ export function StepShell({
         text_done: "storyboard",
         storyboard_done: "style",
         style_done: "cds",
-        cds_done: "render",
-        rendering: "render",
+        cds_done: "",
+        rendering: "",
         done: "",
       };
       const next = map[s] ?? "story";

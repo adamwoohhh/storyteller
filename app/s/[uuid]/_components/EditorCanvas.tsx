@@ -13,9 +13,15 @@ import "reactflow/dist/style.css";
 import { Button } from "@/components/ui/button";
 import { StoryNodeView } from "./StoryNode";
 import { api } from "@/lib/client/api";
+import { useJob } from "@/lib/client/useJob";
 import { getEditorNodePosition, getOrganizedNodePositions } from "./editor-layout";
 import { toast } from "sonner";
 import { buildStoryGalleryItems } from "./image-gallery";
+import {
+  isBulkSceneRendering,
+  renderProgressLabel,
+  shouldAutoStartSceneRender,
+} from "./editor-render-state";
 
 const nodeTypes = { story: StoryNodeView };
 const NODE_WIDTH = 288;
@@ -40,6 +46,14 @@ export function EditorCanvas({
     [data.nodes],
   );
   const galleryItems = useMemo(() => buildStoryGalleryItems(data), [data]);
+  const [renderJobId, setRenderJobId] = useState<string | null>(null);
+  const startingRenderRef = useRef(false);
+  const renderJob = useJob(renderJobId);
+  const isRenderingScenes = isBulkSceneRendering({
+    storyStatus: data.story.status,
+    jobId: renderJobId,
+    jobStatus: renderJob.status,
+  });
   const initialNodes = useMemo<Node[]>(
     () =>
       sortedNodes.map((n: Any, index: number) => ({
@@ -52,13 +66,14 @@ export function EditorCanvas({
           characters: n.characters,
           imagePrompt: n.imagePrompt,
           imageId: n.imageId,
+          isRendering: isRenderingScenes && !n.imageId,
           story: data.story,
           allCharacters: data.characters,
           galleryItems,
           onChanged: reload,
         },
       })),
-    [sortedNodes, data.story, data.characters, galleryItems, reload],
+    [sortedNodes, isRenderingScenes, data.story, data.characters, galleryItems, reload],
   );
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -68,6 +83,46 @@ export function EditorCanvas({
   useEffect(() => {
     setNodes(initialNodes);
   }, [initialNodes, setNodes]);
+
+  useEffect(() => {
+    if (!shouldAutoStartSceneRender(data.story.status) || renderJobId || startingRenderRef.current) {
+      return;
+    }
+
+    let cancelled = false;
+    startingRenderRef.current = true;
+    api
+      .renderAll(data.story.id)
+      .then((result) => {
+        if (!cancelled) setRenderJobId(result.jobId);
+      })
+      .catch((error: Error) => {
+        toast.error(error.message || "启动插图生成失败");
+      })
+      .finally(() => {
+        if (!cancelled) startingRenderRef.current = false;
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data.story.id, data.story.status, renderJobId]);
+
+  useEffect(() => {
+    if (!renderJob.progress) return;
+    reload().catch(() => {});
+  }, [renderJob.progress, reload]);
+
+  useEffect(() => {
+    if (renderJob.status !== "done" || !renderJobId) return;
+    reload().catch(() => {});
+  }, [renderJob.status, renderJobId, reload]);
+
+  useEffect(() => {
+    if (renderJob.status === "error" && renderJob.error) {
+      toast.error(renderJob.error);
+    }
+  }, [renderJob.status, renderJob.error]);
 
   const edges = useMemo<Edge[]>(() => {
     return sortedNodes.slice(1).map((n: Any, i: number) => ({
@@ -128,6 +183,12 @@ export function EditorCanvas({
           {data.story.title || "Untitled"}
         </h2>
         <div className="flex gap-2">
+          {isRenderingScenes && (
+            <div className="flex items-center rounded-full border border-[#5a3029]/20 bg-secondary px-3 py-1 text-xs font-black text-foreground">
+              生成插图{" "}
+              {renderProgressLabel({ progress: renderJob.progress, totalNodes: sortedNodes.length })}
+            </div>
+          )}
           <Button variant="secondary" onClick={organizeNodes} disabled={organizing}>
             {organizing ? "整理中…" : "整理节点"}
           </Button>

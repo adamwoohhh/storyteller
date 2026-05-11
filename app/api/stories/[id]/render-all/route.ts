@@ -14,7 +14,12 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     .set({ status: "rendering", updatedAt: sql`(unixepoch())` })
     .where(eq(stories.id, id))
     .run();
-  const ns = rt.db.select().from(nodes).where(eq(nodes.storyId, id)).all();
+  const ns = rt.db
+    .select()
+    .from(nodes)
+    .where(eq(nodes.storyId, id))
+    .all()
+    .filter((node) => !node.imageId);
   const total = ns.length;
   const jobId = await startJob({
     rt,
