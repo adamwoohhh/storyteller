@@ -2,14 +2,18 @@ import type { StoryInput, ReviseOpts, StoryboardOpts, CDSGenArgs } from "./types
 
 export const BASE_LANGUAGE_PROMPT = `使用用户偏好的语言（中文或英文）生成内容，保持与用户输入一致，除非用户明确要求改变语言`;
 
+function withLanguageRule(prompt: string): string {
+  return `${prompt}\n- ${BASE_LANGUAGE_PROMPT}`;
+}
+
 /**
  * 生成故事正文的系统提示词，目前设定为【中文儿童绘本作家】，后续对故事类型有要求时可优化这里
  */
-export const STORY_SYSTEM = `你是一位中文儿童绘本作家，擅长把简单设定写成温暖、有画面感、起承转合分明的故事。要求：
+export const STORY_SYSTEM = withLanguageRule(`你是一位儿童绘本作家，擅长把简单设定写成温暖、有画面感、起承转合分明的故事。要求：
 - 叙述清晰、段落分明
 - 突出角色形象和场景细节，便于后续生成插图
 - 不使用敏感、暴力或恐怖内容
-- 直接输出故事正文，不要前后缀`;
+- 直接输出故事正文，不要前后缀`);
 
 /**
  * 把故事设定、角色信息、起始剧情拼接成用户提示词；
@@ -26,9 +30,10 @@ export function buildStoryUser(input: StoryInput, revise?: ReviseOpts): string {
 
 /**
  * 故事分镜的系统提示词
- * - TODO: 应该加上用户偏好语言约束，以用户输入的语言约束输出的语言
  */
-export const STORYBOARD_SYSTEM = `你是一位绘本分镜师。把给定故事文本切分成节点，每个节点附一段专为生图模型优化的英文 image_prompt（以视觉细节为主：构图/动作/表情/光线/场景）。`;
+export const STORYBOARD_SYSTEM = withLanguageRule(
+  `你是一位绘本分镜师。把给定故事文本切分成节点，每个节点附一段专为生图模型优化的 image_prompt（以视觉细节为主：构图/动作/表情/光线/场景）。`,
+);
 
 export function buildStoryboardUser(storyText: string, opts: StoryboardOpts): string {
   const charLines = opts.characters
@@ -73,7 +78,9 @@ export const STORYBOARD_SCHEMA = {
 };
 
 // 角色提取
-export const EXTRACT_SYSTEM = `从给定中文故事中提取主要角色（最多 5 个），每个角色给出名字和一两句外观/性格描述。`;
+export const EXTRACT_SYSTEM = withLanguageRule(
+  `从给定故事中提取主要角色（最多 5 个），每个角色给出名字和一两句外观/性格描述。`,
+);
 export const EXTRACT_SCHEMA = {
   name: "Characters",
   schema: {
@@ -96,7 +103,9 @@ export const EXTRACT_SCHEMA = {
 };
 
 // 生成角色设计卡 CDS 提示词
-export const CDS_SYSTEM = `为每个角色生成 Character Design Sheet（CDS）。每个角色四个字段（appearance/outfit/traits/style），描述要为后续生图模型友好：具体、可视、避免抽象词。所有 CDS 都要符合给定的全局画风。`;
+export const CDS_SYSTEM = withLanguageRule(
+  `为每个角色生成 Character Design Sheet（CDS）。每个角色四个字段（appearance/outfit/traits/style），描述要为后续生图模型友好：具体、可视、避免抽象词。所有 CDS 都要符合给定的全局画风。`,
+);
 export function buildCDSUser(args: CDSGenArgs): string {
   const chars = args.characters.map((c) => `- ${c.id} ${c.name}: ${c.description}`).join("\n");
   return `画风：${args.artStylePrompt}\n角色：\n${chars}\n\n参考故事原文以保证一致性：\n${args.storyText}`;
