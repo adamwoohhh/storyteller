@@ -3,13 +3,18 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { ART_STYLES, resolveArtStylePrompt } from "@/lib/art-styles";
+import { ART_STYLES, type ArtStyle, resolveArtStylePrompt } from "@/lib/art-styles";
 import { api } from "@/lib/client/api";
 import { toast } from "sonner";
 import { StepFrame } from "./StepFrame";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
+
+function getStyleSummary(style: ArtStyle): string {
+  if (style.structuredPrompt?.length) return style.structuredPrompt.slice(0, 3).join("\n");
+  return style.prompt || "完全自定义";
+}
 
 export function StepArtStyle({
   data,
@@ -60,9 +65,17 @@ export function StepArtStyle({
                 : ""
             }`}
           >
+            {s.previewImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={s.previewImage}
+                alt={`${s.name} 示例图`}
+                className="mb-3 h-32 w-full rounded-md border border-[#5a3029]/20 object-cover"
+              />
+            ) : null}
             <div className="font-black">{s.name}</div>
             <div className="text-xs text-muted-foreground line-clamp-3 mt-1">
-              {s.prompt || "完全自定义"}
+              {getStyleSummary(s)}
             </div>
           </Card>
         ))}

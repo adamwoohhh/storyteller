@@ -1,7 +1,9 @@
 export interface ArtStyle {
   id: string;
   name: string;
-  prompt: string;
+  prompt?: string;
+  structuredPrompt?: string[];
+  previewImage?: string;
 }
 
 export const ART_STYLES: ArtStyle[] = [
@@ -47,6 +49,21 @@ export const ART_STYLES: ArtStyle[] = [
     prompt:
       "traditional chinese ink wash painting, fluid brush strokes, monochrome with subtle color washes, abundant negative space, no text",
   },
+  {
+    id: "fzk",
+    name: "丰子恺",
+    // prompt: "Chinese ink and wash literati painting, expressive brush lines, sparse composition with large blank space, muted earthy colors, rice paper texture, handwritten calligraphy inscription, red seal stamps, poetic rural life atmosphere, no text",
+    structuredPrompt: [
+      "画风：中国水墨、文人画、传统人物小品、古风插画",
+      "笔触：毛笔勾线、写意、简练、线条有顿挫",
+      "色彩：淡彩、低饱和、土色、墨绿、胭脂色",
+      "材质：宣纸纹理、手绘墨迹、旧纸感",
+      "构图：大量留白",
+      "元素：乡村屋舍、草木、飞鸟",
+      "氛围：含蓄、诗意、民俗、怀旧、人情味",
+    ],
+    previewImage: "/art-styles/fzk.png",
+  },
   { id: "custom", name: "自定义", prompt: "" },
 ];
 
@@ -56,7 +73,10 @@ export function getArtStyle(id: string): ArtStyle | undefined {
 
 export function resolveArtStylePrompt(id: string, userAddition: string): string {
   if (id === "custom") return userAddition.trim();
-  const base = getArtStyle(id)?.prompt ?? "";
+  const style = getArtStyle(id);
+  const base = style?.structuredPrompt?.length
+    ? style.structuredPrompt.join("\n")
+    : (style?.prompt ?? "");
   const extra = userAddition.trim();
   return extra ? `${base}. ${extra}` : base;
 }
