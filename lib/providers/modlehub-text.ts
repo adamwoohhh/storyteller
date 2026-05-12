@@ -41,11 +41,10 @@ export class ModelHubTextProvider implements TextProvider {
     input: StoryInput,
     opts?: { revise?: ReviseOpts },
   ): AsyncIterable<string> {
-    const content = await this.chat([
+    yield* this.chatStream([
       { role: "system", content: STORY_SYSTEM },
       { role: "user", content: buildStoryUser(input, opts?.revise) },
     ]);
-    if (content) yield content;
   }
 
   async extractCharacters(storyText: string): Promise<ExtractedCharacter[]> {
@@ -115,8 +114,87 @@ export class ModelHubTextProvider implements TextProvider {
     const data = (await response.json()) as ChatResponse;
     return data.choices?.[0]?.message?.content ?? "";
   }
+
+  private async *chatStream(messages: ChatMessage[]): AsyncIterable<string> {
+    const url = new URL(this.baseURL);
+    url.searchParams.set("ak", this.apiKey);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-TT-LOGID": makeLogId(),
+      },
+      body: JSON.stringify({
+        stream: true,
+        model: this.model,
+        messages,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`modelhub chat request failed: ${response.status} ${await response.text()}`);
+    }
+
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!response.body || !contentType.includes("text/event-stream")) {
+      const data = (await response.json()) as ChatResponse;
+      const content = data.choices?.[0]?.message?.content ?? "";
+      if (content) yield content;
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split(/\n\n/);
+        buffer = events.pop() ?? "";
+
+        for (const event of events) {
+          const chunk = parseSseContent(event);
+          if (chunk === "[DONE]") return;
+          if (chunk) yield chunk;
+        }
+      }
+
+      const chunk = parseSseContent(buffer);
+      if (chunk && chunk !== "[DONE]") yield chunk;
+    } finally {
+      reader.releaseLock();
+    }
+  }
 }
 
 function makeLogId(): string {
   return `storyteller-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function parseSseContent(event: string): string | null {
+  const dataLines = event
+    .split(/\r?\n/)
+    .filter((line) => line.startsWith("data:"))
+    .map((line) => line.slice(5).trim());
+  if (dataLines.length === 0) return null;
+
+  const data = dataLines.join("\n");
+  if (data === "[DONE]") return "[DONE]";
+
+  try {
+    const parsed = JSON.parse(data) as {
+      choices?: { delta?: { content?: string | null }; message?: { content?: string | null } }[];
+    };
+    return (
+      parsed.choices?.[0]?.delta?.content ??
+      parsed.choices?.[0]?.message?.content ??
+      null
+    );
+  } catch {
+    return null;
+  }
 }

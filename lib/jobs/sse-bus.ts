@@ -1,6 +1,6 @@
 export type SseEvent =
   | { type: "chunk"; data: string }
-  | { type: "progress"; data: { current: number; total: number; note?: string } }
+  | { type: "progress"; data: { current: number; total: number; note?: string; nodeId?: string } }
   | { type: "done"; data: unknown }
   | { type: "error"; data: { message: string } };
 

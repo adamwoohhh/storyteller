@@ -18,12 +18,17 @@ export function InputModePaste({
   return (
     <div className="mt-4 space-y-5">
       <div className="space-y-2">
-        <Label className="font-black text-foreground">标题（可选）</Label>
-        <Input value={value.title} onChange={(e) => onChange({ ...value, title: e.target.value })} />
+        <Label htmlFor="paste-title" className="font-black text-foreground">标题（可选）</Label>
+        <Input
+          id="paste-title"
+          value={value.title}
+          onChange={(e) => onChange({ ...value, title: e.target.value })}
+        />
       </div>
       <div className="space-y-2">
-        <Label className="font-black text-foreground">完整故事</Label>
+        <Label htmlFor="paste-story-text" className="font-black text-foreground">完整故事</Label>
         <Textarea
+          id="paste-story-text"
           rows={14}
           value={value.storyText}
           onChange={(e) => onChange({ ...value, storyText: e.target.value })}

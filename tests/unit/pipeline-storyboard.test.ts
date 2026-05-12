@@ -37,6 +37,31 @@ describe("pipeline.storyboard", () => {
     expect(story?.status).toBe("storyboard_done");
   });
 
+  it("keeps structured story paragraphs as node text and stores summaries", async () => {
+    const { db } = await makeTestDb();
+    const id = randomUUID();
+    db.insert(stories)
+      .values({
+        id,
+        inputMode: "structured",
+        storyText: "第一段。\n\n第二段。\n\n第三段。\n\n第四段。",
+      })
+      .run();
+
+    const inserted = await generateStoryboard({
+      db,
+      provider: new FakeTextProvider(),
+      storyId: id,
+      targetMin: 4,
+      targetMax: 12,
+    });
+
+    expect(inserted.map((node) => node.text)).toEqual(["第一段。", "第二段。", "第三段。", "第四段。"]);
+    expect(inserted.every((node) => node.summary.length > 0)).toBe(true);
+    const rows = db.select().from(nodes).where(eq(nodes.storyId, id)).all();
+    expect(rows.map((node) => node.summary)).toEqual(inserted.map((node) => node.summary));
+  });
+
   it("rejects storyboard characters that are not exact character ids", async () => {
     const { db } = await makeTestDb();
     const storyId = randomUUID();
@@ -82,6 +107,7 @@ class InvalidStoryboardCharacterProvider implements TextProvider {
       {
         order_index: 0,
         text: "兔叽叽和龟龟比赛。",
+        summary: "兔叽叽和龟龟比赛",
         image_prompt: "rabbit and turtle racing",
         characters: [this.characterValue],
       },

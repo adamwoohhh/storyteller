@@ -7,13 +7,17 @@ import type {
   StoryboardOpts,
   CDSGenArgs,
 } from "./types";
+import { splitStoryParagraphs } from "@/lib/story-paragraphs";
 
 export class FakeTextProvider implements TextProvider {
   async *generateStory(input: StoryInput): AsyncIterable<string> {
     const names = input.characters.map((c) => c.name).join("、") || "主角";
-    const text =
-      `从前，在${input.setting || "一个地方"}，${names}开始了旅程。${input.opening || ""}\n` +
-      `他们经历了三段冒险，最终回到了起点。\n这是一个温暖的故事。`;
+    const text = [
+      `从前，在${input.setting || "一个地方"}，${names}开始了旅程。${input.opening || ""}`,
+      "第一处场景里，他们发现了一条闪闪发亮的小路。",
+      "第二处场景里，他们互相帮助，越过了一个小小难题。",
+      "最后，他们带着新的勇气回到起点，明白了陪伴的意义。",
+    ].join("\n\n");
     for (const ch of text) {
       yield ch;
     }
@@ -30,7 +34,10 @@ export class FakeTextProvider implements TextProvider {
   }
 
   async generateStoryboard(storyText: string, opts: StoryboardOpts): Promise<NodeDraft[]> {
-    const segments = storyText.split(/[。.\n]+/).map((s) => s.trim()).filter(Boolean);
+    const segments =
+      opts.mode === "structured"
+        ? splitStoryParagraphs(storyText)
+        : storyText.split(/[。.\n]+/).map((s) => s.trim()).filter(Boolean);
     const target = Math.min(
       Math.max(opts.targetMin, segments.length || opts.targetMin),
       opts.targetMax,
@@ -39,6 +46,7 @@ export class FakeTextProvider implements TextProvider {
     return Array.from({ length: target }, (_, i) => ({
       order_index: i,
       text: segments[i] ?? `片段 ${i + 1}`,
+      summary: `总结 ${i + 1}：${segments[i] ?? "场景"}`,
       image_prompt: `画面 ${i + 1}：${segments[i] ?? "场景"}`,
       characters: ids,
     }));

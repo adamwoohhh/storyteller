@@ -33,8 +33,14 @@ describe("OpenAITextProvider", () => {
               message: {
                 content: JSON.stringify({
                   nodes: [
-                    { order_index: 0, text: "a", image_prompt: "p1", characters: ["c1"] },
-                    { order_index: 1, text: "b", image_prompt: "p2", characters: [] },
+                    {
+                      order_index: 0,
+                      text: "a",
+                      summary: "sa",
+                      image_prompt: "p1",
+                      characters: ["c1"],
+                    },
+                    { order_index: 1, text: "b", summary: "sb", image_prompt: "p2", characters: [] },
                   ],
                 }),
               },
@@ -52,5 +58,6 @@ describe("OpenAITextProvider", () => {
     });
     expect(r).toHaveLength(2);
     expect(r[0]?.text).toBe("a");
+    expect(r[0]?.summary).toBe("sa");
   });
 });

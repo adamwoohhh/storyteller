@@ -7,6 +7,7 @@ export interface StoryInput {
 export interface NodeDraft {
   order_index: number;
   text: string;
+  summary: string;
   image_prompt: string;
   characters: string[];
 }

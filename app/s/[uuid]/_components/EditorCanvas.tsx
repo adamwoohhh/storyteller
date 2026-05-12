@@ -22,7 +22,14 @@ import {
   getStoryDisplayTitle,
   getStoryModeAction,
 } from "@/lib/story-navigation";
-import { getEditorNodePosition, getOrganizedNodePositions } from "./editor-layout";
+import {
+  EDITOR_NODE_GAP_X,
+  EDITOR_NODE_GAP_Y,
+  EDITOR_NODE_HEIGHT,
+  EDITOR_NODE_WIDTH,
+  getEditorNodePosition,
+  getOrganizedNodePositions,
+} from "./editor-layout";
 import { toast } from "sonner";
 import { buildStoryGalleryItems } from "./image-gallery";
 import {
@@ -32,10 +39,6 @@ import {
 } from "./editor-render-state";
 
 const nodeTypes = { story: StoryNodeView };
-const NODE_WIDTH = 288;
-const NODE_HEIGHT = 430;
-const NODE_GAP_X = 56;
-const NODE_GAP_Y = 88;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
@@ -62,6 +65,11 @@ export function EditorCanvas({
     jobId: renderJobId,
     jobStatus: renderJob.status,
   });
+  const renderingNodeId = useMemo(() => {
+    if (!isRenderingScenes) return null;
+    const completed = renderJob.progress?.current ?? 0;
+    return sortedNodes.find((node: Any, index: number) => index >= completed && !node.imageId)?.id ?? null;
+  }, [isRenderingScenes, renderJob.progress, sortedNodes]);
   const initialNodes = useMemo<Node[]>(
     () =>
       sortedNodes.map((n: Any, index: number) => ({
@@ -71,17 +79,19 @@ export function EditorCanvas({
         data: {
           id: n.id,
           text: n.text,
+          summary: n.summary,
           characters: n.characters,
           imagePrompt: n.imagePrompt,
           imageId: n.imageId,
-          isRendering: isRenderingScenes && !n.imageId,
+          isRendering: n.id === renderingNodeId,
+          imageSide: index % 2 === 0 ? "right" : "left",
           story: data.story,
           allCharacters: data.characters,
           galleryItems,
           onChanged: reload,
         },
       })),
-    [sortedNodes, isRenderingScenes, data.story, data.characters, galleryItems, reload],
+    [sortedNodes, renderingNodeId, data.story, data.characters, galleryItems, reload],
   );
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -150,15 +160,15 @@ export function EditorCanvas({
   async function organizeNodes() {
     if (nodes.length === 0) return;
 
-    const canvasWidth = canvasRef.current?.clientWidth ?? NODE_WIDTH;
+    const canvasWidth = canvasRef.current?.clientWidth ?? EDITOR_NODE_WIDTH;
     const positions = getOrganizedNodePositions({
       count: nodes.length,
       canvasWidth,
-      nodeWidth: NODE_WIDTH,
-      nodeHeight: NODE_HEIGHT,
-      nodeHeights: nodes.map((node) => node.height ?? NODE_HEIGHT),
-      gapX: NODE_GAP_X,
-      gapY: NODE_GAP_Y,
+      nodeWidth: EDITOR_NODE_WIDTH,
+      nodeHeight: EDITOR_NODE_HEIGHT,
+      nodeHeights: nodes.map((node) => node.height ?? EDITOR_NODE_HEIGHT),
+      gapX: EDITOR_NODE_GAP_X,
+      gapY: EDITOR_NODE_GAP_Y,
     });
     const arranged = nodes.map((node, index) => ({
       ...node,

@@ -28,6 +28,7 @@ describe("fake providers", () => {
     });
     expect(nodes.length).toBeGreaterThanOrEqual(3);
     expect(nodes[0]?.text).toContain("片段");
+    expect(nodes[0]?.summary).toContain("片段");
   });
 
   it("returns CDS for each character", async () => {

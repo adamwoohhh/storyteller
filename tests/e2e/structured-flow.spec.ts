@@ -24,10 +24,7 @@ test("structured input runs through wizard to canvas", async ({ page }) => {
     timeout: 30_000,
   });
   await page.getByRole("button", { name: /生成参考图/ }).first().click();
-  await expect(page.getByRole("button", { name: /✓ 已确认|确认/ }).first()).toBeEnabled({
-    timeout: 30_000,
-  });
-  await page.getByRole("button", { name: /^确认$/ }).first().click();
+  await expect(page.getByText("已采纳").first()).toBeVisible({ timeout: 30_000 });
   await page.getByRole("button", { name: "开始生成插图" }).click();
 
   await expect(page.getByRole("button", { name: "阅读态" })).toBeVisible({ timeout: 60_000 });

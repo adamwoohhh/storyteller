@@ -9,7 +9,13 @@ import type {
 
 describe("provider types", () => {
   it("compiles structurally", () => {
-    const _draft: NodeDraft = { order_index: 0, text: "x", image_prompt: "y", characters: [] };
+    const _draft: NodeDraft = {
+      order_index: 0,
+      text: "x",
+      summary: "s",
+      image_prompt: "y",
+      characters: [],
+    };
     const _cds: CDSDraft = {
       characterId: "c1",
       appearance: "",

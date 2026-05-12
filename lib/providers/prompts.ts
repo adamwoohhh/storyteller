@@ -11,6 +11,7 @@ function withLanguageRule(prompt: string): string {
  */
 export const STORY_SYSTEM = withLanguageRule(`你是一位儿童绘本作家，擅长把简单设定写成温暖、有画面感、起承转合分明的故事。要求：
 - 叙述清晰、段落分明
+- 根据故事剧情和场景切分为 4-12 个基础段落，段落之间用一个空行分隔
 - 突出角色形象和场景细节，便于后续生成插图
 - 不使用敏感、暴力或恐怖内容
 - 直接输出故事正文，不要前后缀`);
@@ -25,14 +26,14 @@ export function buildStoryUser(input: StoryInput, revise?: ReviseOpts): string {
   }
   const chars =
     input.characters.map((c) => `- ${c.name}：${c.description}`).join("\n") || "（用户未提供角色）";
-  return `故事设定：${input.setting}\n角色：\n${chars}\n起始剧情：${input.opening}\n请据此创作完整故事。`;
+  return `故事设定：${input.setting}\n角色：\n${chars}\n起始剧情：${input.opening}\n请据此创作完整故事，并按剧情与场景自然切分为 4-12 个基础段落。`;
 }
 
 /**
  * 故事分镜的系统提示词
  */
 export const STORYBOARD_SYSTEM = withLanguageRule(
-  `你是一位绘本分镜师。把给定故事文本切分成节点，每个节点附一段专为生图模型优化的 image_prompt（以视觉细节为主：构图/动作/表情/光线/场景）。`,
+  `你是一位绘本分镜师。为每个故事段落设计一个画面节点：保留段落原文 text，写出整段总结或选取片段总结 summary，并附一段专为生图模型优化的 image_prompt（以视觉细节为主：构图/动作/表情/光线/场景）。`,
 );
 
 export function buildStoryboardUser(storyText: string, opts: StoryboardOpts): string {
@@ -47,7 +48,7 @@ export function buildStoryboardUser(storyText: string, opts: StoryboardOpts): st
   const sliceRule =
     opts.mode === "paste"
       ? "节点 text 字段必须是原文的精确切片（连续字符），不得改写或扩写。"
-      : "节点 text 字段可以是原文段落或轻度润色。";
+      : "故事文本已经按基础段落切好；每个基础段落必须生成且只生成一个节点，text 字段必须保留对应段落原文，不得改写或扩写。";
   return `角色清单：\n${charLines}\n\ncharacters 字段只能填写角色 ID，必须从以下 ID 中选择：${ids}。\n${idExample}\n如果某个节点没有角色，characters 返回空数组 []。\n\n${sliceRule}\n目标节点数：${opts.targetMin}-${opts.targetMax}\n\n故事文本：\n${storyText}`;
 }
 
@@ -65,10 +66,11 @@ export const STORYBOARD_SCHEMA = {
           properties: {
             order_index: { type: "integer" },
             text: { type: "string" },
+            summary: { type: "string" },
             image_prompt: { type: "string" },
             characters: { type: "array", items: { type: "string" } },
           },
-          required: ["order_index", "text", "image_prompt", "characters"],
+          required: ["order_index", "text", "summary", "image_prompt", "characters"],
         },
       },
     },

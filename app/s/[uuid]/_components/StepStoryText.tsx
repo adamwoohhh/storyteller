@@ -8,6 +8,7 @@ import { api } from "@/lib/client/api";
 import { useJob } from "@/lib/client/useJob";
 import { toast } from "sonner";
 import { StepFrame } from "./StepFrame";
+import { splitStoryParagraphs } from "@/lib/story-paragraphs";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
@@ -73,6 +74,7 @@ export function StepStoryText({
 
   const liveText = job.status === "running" ? job.chunks : edited;
   const isStreaming = job.status === "running";
+  const liveParagraphs = splitStoryParagraphs(liveText);
 
   return (
     <StepFrame
@@ -81,12 +83,16 @@ export function StepStoryText({
       currentStep="story"
     >
       {isStreaming ? (
-        <div className="min-h-[220px] whitespace-pre-wrap rounded-3xl border-2 border-dashed border-[#5a3029]/30 bg-[#fff8e8] p-5 leading-7">
-          {liveText}
-          <span className="animate-pulse">▍</span>
-        </div>
+        <StoryParagraphPreview text={liveText} showCursor />
       ) : (
-        <Textarea rows={18} value={edited} onChange={(e) => setEdited(e.target.value)} />
+        <>
+          <Textarea rows={18} value={edited} onChange={(e) => setEdited(e.target.value)} />
+          {liveParagraphs.length > 1 && (
+            <div className="mt-5">
+              <StoryParagraphPreview text={edited} />
+            </div>
+          )}
+        </>
       )}
       {!isStreaming && (
         <>
@@ -114,11 +120,34 @@ export function StepStoryText({
           </div>
           <div className="mt-6 flex justify-end">
             <Button onClick={onNext} disabled={!edited.trim()}>
-              继续：分镜
+              继续 → 分镜
             </Button>
           </div>
         </>
       )}
     </StepFrame>
+  );
+}
+
+function StoryParagraphPreview({
+  text,
+  showCursor = false,
+}: {
+  text: string;
+  showCursor?: boolean;
+}) {
+  const paragraphs = splitStoryParagraphs(text);
+  const visible = paragraphs.length > 0 ? paragraphs : [text];
+
+  return (
+    <div className="min-h-[220px] rounded-3xl border-2 border-dashed border-[#5a3029]/30 bg-[#fff8e8] p-5 leading-7">
+      {visible.map((paragraph, index) => (
+        <div key={index}>
+          {index > 0 && <div className="my-4 h-px bg-[#5a3029]/20" />}
+          <p className="whitespace-pre-wrap">{paragraph}</p>
+        </div>
+      ))}
+      {showCursor && <span className="animate-pulse">▍</span>}
+    </div>
   );
 }

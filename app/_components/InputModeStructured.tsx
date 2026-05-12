@@ -33,12 +33,17 @@ export function InputModeStructured({
   return (
     <div className="mt-4 space-y-5">
       <div className="space-y-2">
-        <Label className="font-black text-foreground">标题（可选）</Label>
-        <Input value={value.title} onChange={(e) => set({ title: e.target.value })} />
+        <Label htmlFor="structured-title" className="font-black text-foreground">标题（可选）</Label>
+        <Input
+          id="structured-title"
+          value={value.title}
+          onChange={(e) => set({ title: e.target.value })}
+        />
       </div>
       <div className="space-y-2">
-        <Label className="font-black text-foreground">故事设定</Label>
+        <Label htmlFor="structured-setting" className="font-black text-foreground">故事设定</Label>
         <Textarea
+          id="structured-setting"
           rows={4}
           value={value.setting}
           onChange={(e) => set({ setting: e.target.value })}
@@ -79,13 +84,14 @@ export function InputModeStructured({
               set({ characters: [...value.characters, { name: "", description: "" }] })
             }
           >
-            添加角色
+            + 添加角色
           </Button>
         </div>
       </div>
       <div className="space-y-2">
-        <Label className="font-black text-foreground">起始剧情</Label>
+        <Label htmlFor="structured-opening" className="font-black text-foreground">起始剧情</Label>
         <Textarea
+          id="structured-opening"
           rows={3}
           value={value.opening}
           onChange={(e) => set({ opening: e.target.value })}

@@ -3,6 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import type { DB } from "@/lib/db/client";
 import { stories, characters as charactersTable, nodes } from "@/lib/db/schema";
 import type { TextProvider } from "@/lib/providers/types";
+import { splitStoryParagraphs, storyTextFromParagraphs } from "@/lib/story-paragraphs";
 
 export async function generateStoryboard(args: {
   db: DB;
@@ -11,7 +12,14 @@ export async function generateStoryboard(args: {
   targetMin: number;
   targetMax: number;
 }): Promise<
-  { id: string; orderIndex: number; text: string; imagePrompt: string; characters: string[] }[]
+  {
+    id: string;
+    orderIndex: number;
+    text: string;
+    summary: string;
+    imagePrompt: string;
+    characters: string[];
+  }[]
 > {
   const { db, provider, storyId, targetMin, targetMax } = args;
   const story = db.select().from(stories).where(eq(stories.id, storyId)).get();
@@ -21,11 +29,20 @@ export async function generateStoryboard(args: {
     .from(charactersTable)
     .where(eq(charactersTable.storyId, storyId))
     .all();
-  const drafts = await provider.generateStoryboard(story.storyText, {
+  const isStructured = story.inputMode === "structured";
+  const storyParagraphs = splitStoryParagraphs(story.storyText);
+  const storyboardText =
+    isStructured && storyParagraphs.length > 0
+      ? storyTextFromParagraphs(storyParagraphs)
+      : story.storyText;
+  const resolvedMin = isStructured && storyParagraphs.length > 0 ? storyParagraphs.length : targetMin;
+  const resolvedMax = isStructured && storyParagraphs.length > 0 ? storyParagraphs.length : targetMax;
+
+  const drafts = await provider.generateStoryboard(storyboardText, {
     mode: story.inputMode as "structured" | "paste",
     characters: charRows.map((c) => ({ id: c.id, name: c.name, description: c.userInput })),
-    targetMin,
-    targetMax,
+    targetMin: resolvedMin,
+    targetMax: resolvedMax,
   });
   const validCharacterIds = new Set(charRows.map((c) => c.id));
   for (const draft of drafts) {
@@ -41,20 +58,27 @@ export async function generateStoryboard(args: {
     id: string;
     orderIndex: number;
     text: string;
+    summary: string;
     imagePrompt: string;
     characters: string[];
   }[] = [];
-  for (let i = 0; i < drafts.length; i++) {
+  const nodeCount = isStructured && storyParagraphs.length > 0 ? storyParagraphs.length : drafts.length;
+  for (let i = 0; i < nodeCount; i++) {
     const d = drafts[i]!;
     const id = randomUUID();
+    const text = isStructured && storyParagraphs[i] ? storyParagraphs[i]! : d.text;
+    const summary = d?.summary?.trim() || text.slice(0, 80);
+    const imagePrompt = d?.image_prompt?.trim() || `画面 ${i + 1}：${summary}`;
+    const characterIds = d?.characters ?? [];
     db.insert(nodes)
       .values({
         id,
         storyId,
         orderIndex: i,
-        text: d.text,
-        imagePrompt: d.image_prompt,
-        characters: JSON.stringify(d.characters),
+        text,
+        summary,
+        imagePrompt,
+        characters: JSON.stringify(characterIds),
         positionX: 0,
         positionY: i * 220,
       })
@@ -62,9 +86,10 @@ export async function generateStoryboard(args: {
     result.push({
       id,
       orderIndex: i,
-      text: d.text,
-      imagePrompt: d.image_prompt,
-      characters: d.characters,
+      text,
+      summary,
+      imagePrompt,
+      characters: characterIds,
     });
   }
   db.update(stories)

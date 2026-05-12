@@ -7,6 +7,7 @@ import { nodes } from "@/lib/db/schema";
 export const runtime = "nodejs";
 const Patch = z.object({
   text: z.string().optional(),
+  summary: z.string().optional(),
   imagePrompt: z.string().optional(),
   characters: z.array(z.string()).optional(),
   orderIndex: z.number().int().optional(),

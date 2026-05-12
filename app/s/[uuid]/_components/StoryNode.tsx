@@ -20,14 +20,18 @@ import {
   type PromptPreviewStory,
 } from "./render-prompt-preview";
 import { type GalleryItem, ImageGalleryThumb } from "./image-gallery";
+import { cn } from "@/lib/utils";
+import { EDITOR_NODE_HEIGHT, EDITOR_NODE_WIDTH } from "./editor-layout";
 
 export interface StoryNodeData {
   id: string;
   text: string;
+  summary?: string;
   characters: string;
   imagePrompt: string;
   imageId: string | null;
   isRendering?: boolean;
+  imageSide?: "left" | "right";
   story: PromptPreviewStory;
   allCharacters: PromptPreviewCharacter[];
   galleryItems: GalleryItem[];
@@ -84,25 +88,45 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
 
   const isNodeRendering = data.isRendering || (!!jobId && job.status === "running");
 
+  const hasInlineImage = Boolean(data.imageId || isNodeRendering);
+  const imageSide = data.imageSide ?? "right";
+
   return (
-    <div className="w-72 overflow-hidden rounded-[1.5rem] border-2 border-[#5a3029] bg-card shadow-[7px_7px_0_#bed18a]">
+    <div
+      className="overflow-hidden rounded-[1.25rem] border-2 border-[#5a3029] bg-card shadow-[7px_7px_0_#bed18a]"
+      style={{ width: EDITOR_NODE_WIDTH, height: EDITOR_NODE_HEIGHT }}
+    >
       <Handle type="target" position={Position.Top} />
-      <div className="aspect-square w-full overflow-hidden bg-muted">
-        {data.imageId ? (
-          <ImageGalleryThumb
-            items={data.galleryItems}
-            assetId={data.imageId}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs font-black text-muted-foreground">
-            {isNodeRendering ? "生成中…" : "暂无图片"}
+      <div className="flex h-full flex-col gap-3 p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap pr-1 text-sm leading-6">
+          {hasInlineImage && (
+            <div
+              className={cn(
+                "mb-2 size-32 overflow-hidden rounded-2xl border border-[#5a3029]/20 bg-muted",
+                imageSide === "left" ? "float-left mr-3" : "float-right ml-3",
+              )}
+            >
+              {data.imageId ? (
+                <ImageGalleryThumb
+                  items={data.galleryItems}
+                  assetId={data.imageId}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs font-black text-muted-foreground">
+                  生成中…
+                </div>
+              )}
+            </div>
+          )}
+          {data.text}
+        </div>
+        {data.summary && (
+          <div className="max-h-14 overflow-y-auto rounded-2xl border border-[#5a3029]/15 bg-[#fff8e8] p-2 text-xs leading-5 text-muted-foreground">
+            {data.summary}
           </div>
         )}
-      </div>
-      <div className="space-y-3 p-4">
-        <div className="line-clamp-4 whitespace-pre-wrap text-sm leading-6">{data.text}</div>
         <div className="flex gap-2">
           <Button
             size="sm"

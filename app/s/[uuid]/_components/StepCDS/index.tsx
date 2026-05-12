@@ -118,7 +118,7 @@ export function StepCDS({
 
   return (
     <StepFrame
-      title="角色设计卡"
+      title="Character Design Sheet"
       description="确认角色提示词后批量生成参考图；生成完成会自动采纳，也可以编辑提示词后重新生成。"
       currentStep="cds"
     >

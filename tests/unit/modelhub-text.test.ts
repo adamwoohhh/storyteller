@@ -6,7 +6,7 @@ import { ModelHubTextProvider } from "@/lib/providers/modlehub-text";
 const server = withMsw();
 
 describe("ModelHubTextProvider", () => {
-  it("posts chat completions to the ModelHub crawl endpoint with ak query", async () => {
+  it("streams story completions from the ModelHub crawl endpoint with ak query", async () => {
     server.use(
       http.post("https://aidp.bytedance.net/api/modelhub/online/v2/crawl", async ({ request }) => {
         const url = new URL(request.url);
@@ -16,10 +16,14 @@ describe("ModelHubTextProvider", () => {
 
         const body = (await request.json()) as { model: string; stream: boolean };
         expect(body.model).toBe("gpt-5.5-2026-04-24");
-        expect(body.stream).toBe(false);
+        expect(body.stream).toBe(true);
 
-        return HttpResponse.json({
-          choices: [{ message: { content: "从前，有一只狐狸。" } }],
+        const stream =
+          `data: {"choices":[{"delta":{"content":"从前"}}]}\n\n` +
+          `data: {"choices":[{"delta":{"content":"，有一只狐狸。"}}]}\n\n` +
+          `data: [DONE]\n\n`;
+        return new HttpResponse(stream, {
+          headers: { "Content-Type": "text/event-stream" },
         });
       }),
     );

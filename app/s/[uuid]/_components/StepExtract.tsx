@@ -107,7 +107,7 @@ export function StepExtract({
       </div>
       <div className="mt-6 flex justify-end">
         <Button onClick={onNext} disabled={data.characters.length === 0}>
-          继续：分镜
+          继续 → 分镜
         </Button>
       </div>
     </StepFrame>

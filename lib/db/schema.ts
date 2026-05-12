@@ -54,6 +54,7 @@ export const nodes = sqliteTable("nodes", {
     .references(() => stories.id, { onDelete: "cascade" }),
   orderIndex: integer("order_index").notNull(),
   text: text("text").notNull().default(""),
+  summary: text("summary").notNull().default(""),
   imagePrompt: text("image_prompt").notNull().default(""),
   characters: text("characters").notNull().default("[]"),
   imageId: text("image_id").references(() => assets.id, { onDelete: "set null" }),

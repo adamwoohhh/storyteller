@@ -15,11 +15,22 @@ describe("getEditorNodePosition", () => {
 
     expect(nodes.map((node, index) => getEditorNodePosition(node, index, nodes))).toEqual([
       { x: 0, y: 0 },
-      { x: 380, y: 0 },
-      { x: 760, y: 0 },
-      { x: 0, y: 520 },
-      { x: 380, y: 520 },
+      { x: 440, y: 0 },
+      { x: 880, y: 0 },
+      { x: 0, y: 348 },
+      { x: 440, y: 348 },
     ]);
+  });
+
+  it("keeps generated default grid columns wider than the current card width", () => {
+    const nodes = [
+      { id: "a", orderIndex: 0, positionX: 0, positionY: 0 },
+      { id: "b", orderIndex: 1, positionX: 0, positionY: 220 },
+    ];
+
+    const positions = nodes.map((node, index) => getEditorNodePosition(node, index, nodes));
+
+    expect(positions[1]!.x - positions[0]!.x).toBeGreaterThanOrEqual(440);
   });
 
   it("keeps custom positions after the user has moved nodes", () => {
@@ -43,8 +54,24 @@ describe("getEditorNodePosition", () => {
 
     expect(nodes.map((node, index) => getEditorNodePosition(node, index, nodes))).toEqual([
       { x: 120, y: 80 },
-      { x: 380, y: 0 },
-      { x: 760, y: 0 },
+      { x: 440, y: 0 },
+      { x: 880, y: 0 },
+    ]);
+  });
+
+  it("reflows persisted legacy generated grid positions that are too dense for current cards", () => {
+    const nodes = [
+      { id: "a", orderIndex: 0, positionX: 0, positionY: 0 },
+      { id: "b", orderIndex: 1, positionX: 344, positionY: 0 },
+      { id: "c", orderIndex: 2, positionX: 688, positionY: 0 },
+      { id: "d", orderIndex: 3, positionX: 0, positionY: 524 },
+    ];
+
+    expect(nodes.map((node, index) => getEditorNodePosition(node, index, nodes))).toEqual([
+      { x: 0, y: 0 },
+      { x: 440, y: 0 },
+      { x: 880, y: 0 },
+      { x: 0, y: 348 },
     ]);
   });
 });

@@ -82,7 +82,7 @@ export function StepArtStyle({
       </Card>
       <div className="mt-6 flex justify-end">
         <Button onClick={confirm} disabled={!resolved.trim() || saving}>
-          {saving ? "保存中…" : "确认：角色图"}
+          {saving ? "保存中…" : "确认 → CDS"}
         </Button>
       </div>
     </StepFrame>

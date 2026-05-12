@@ -5,9 +5,12 @@ export interface EditorLayoutNode {
 }
 
 const GENERATED_VERTICAL_GAP = 220;
+export const EDITOR_NODE_WIDTH = 384;
+export const EDITOR_NODE_HEIGHT = 260;
+export const EDITOR_NODE_GAP_X = 56;
+export const EDITOR_NODE_GAP_Y = 88;
 const GRID_COLUMNS = 3;
-const GRID_X_GAP = 380;
-const GRID_Y_GAP = 520;
+const LEGACY_GRID_X_STEP = 344;
 
 function numberOrZero(value: number | null | undefined): number {
   return Number.isFinite(value) ? Number(value) : 0;
@@ -19,12 +22,30 @@ function hasGeneratedDefaultPosition(node: EditorLayoutNode, index: number): boo
   return x === 0 && (y === 0 || y === index * GENERATED_VERTICAL_GAP);
 }
 
+function hasLegacyDenseGridPosition(
+  node: EditorLayoutNode,
+  index: number,
+  nodes: EditorLayoutNode[],
+): boolean {
+  const x = numberOrZero(node.positionX);
+  const expectedLegacyX = (index % GRID_COLUMNS) * LEGACY_GRID_X_STEP;
+  if (x !== expectedLegacyX) return false;
+
+  const rowStart = Math.floor(index / GRID_COLUMNS) * GRID_COLUMNS;
+  const rowY = numberOrZero(nodes[rowStart]?.positionY);
+  return numberOrZero(node.positionY) === rowY;
+}
+
 export function getEditorNodePosition(
   node: EditorLayoutNode,
   index: number,
   nodes: EditorLayoutNode[],
 ): { x: number; y: number } {
-  if (nodes.length <= 1 || !hasGeneratedDefaultPosition(node, index)) {
+  const shouldReflow =
+    hasGeneratedDefaultPosition(node, index) ||
+    hasLegacyDenseGridPosition(node, index, nodes);
+
+  if (nodes.length <= 1 || !shouldReflow) {
     return {
       x: numberOrZero(node.positionX),
       y: numberOrZero(node.positionY),
@@ -32,8 +53,8 @@ export function getEditorNodePosition(
   }
 
   return {
-    x: (index % GRID_COLUMNS) * GRID_X_GAP,
-    y: Math.floor(index / GRID_COLUMNS) * GRID_Y_GAP,
+    x: (index % GRID_COLUMNS) * (EDITOR_NODE_WIDTH + EDITOR_NODE_GAP_X),
+    y: Math.floor(index / GRID_COLUMNS) * (EDITOR_NODE_HEIGHT + EDITOR_NODE_GAP_Y),
   };
 }
 

@@ -4,6 +4,7 @@ import { makeTestDb } from "../helpers/db";
 import { stories } from "@/lib/db/schema";
 import { generateStoryText } from "@/lib/pipeline/story-text";
 import { FakeTextProvider } from "@/lib/providers/fake-text";
+import { splitStoryParagraphs } from "@/lib/story-paragraphs";
 import { randomUUID } from "node:crypto";
 
 describe("pipeline.story-text", () => {
@@ -25,6 +26,9 @@ describe("pipeline.story-text", () => {
     const row = db.select().from(stories).where(eq(stories.id, id)).get();
     expect(row?.storyText).toBe(out);
     expect(row?.status).toBe("text_done");
+    const paragraphs = splitStoryParagraphs(out);
+    expect(paragraphs.length).toBeGreaterThanOrEqual(4);
+    expect(paragraphs.length).toBeLessThanOrEqual(12);
   });
 
   it("revise mode passes previous story to provider", async () => {

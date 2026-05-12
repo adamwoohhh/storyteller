@@ -19,6 +19,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     .from(nodes)
     .where(eq(nodes.storyId, id))
     .all()
+    .sort((a, b) => a.orderIndex - b.orderIndex)
     .filter((node) => !node.imageId);
   const total = ns.length;
   const jobId = await startJob({
@@ -28,27 +29,26 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     fn: async (ctx) => {
       let done = 0;
       const errors: { nodeId: string; message: string }[] = [];
-      await Promise.all(
-        ns.map(async (n) => {
-          try {
-            await renderScene({
-              db: rt.db,
-              provider: rt.image,
-              storageRoot: rt.storageRoot,
-              nodeId: n.id,
-              signal: ctx.signal,
-            });
-          } catch (err) {
-            errors.push({
-              nodeId: n.id,
-              message: err instanceof Error ? err.message : String(err),
-            });
-          } finally {
-            done += 1;
-            ctx.publish({ type: "progress", data: { current: done, total } });
-          }
-        }),
-      );
+      for (const n of ns) {
+        ctx.publish({ type: "progress", data: { current: done, total, nodeId: n.id } });
+        try {
+          await renderScene({
+            db: rt.db,
+            provider: rt.image,
+            storageRoot: rt.storageRoot,
+            nodeId: n.id,
+            signal: ctx.signal,
+          });
+        } catch (err) {
+          errors.push({
+            nodeId: n.id,
+            message: err instanceof Error ? err.message : String(err),
+          });
+        } finally {
+          done += 1;
+          ctx.publish({ type: "progress", data: { current: done, total, nodeId: n.id } });
+        }
+      }
       rt.db
         .update(stories)
         .set({ status: "done", updatedAt: sql`(unixepoch())` })

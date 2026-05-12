@@ -59,12 +59,22 @@ export function StepStoryboard({
         {data.nodes.map((n: Any, i: number) => (
           <Card key={n.id} className="space-y-3 bg-[#fff8e8] p-4">
             <div className="story-chip w-fit bg-secondary text-foreground">镜头 {i + 1}</div>
+            <div className="rounded-2xl border border-[#5a3029]/15 bg-card/70 p-3">
+              <div className="mb-2 text-xs font-black text-muted-foreground">原始段落</div>
+              <div className="whitespace-pre-wrap text-sm leading-6">{n.text}</div>
+            </div>
             <Textarea
               rows={3}
               value={n.text}
               disabled={isPaste}
               onChange={(e) => patch(n.id, { text: e.target.value })}
               placeholder="节点文本"
+            />
+            <Textarea
+              rows={2}
+              value={n.summary ?? ""}
+              onChange={(e) => patch(n.id, { summary: e.target.value })}
+              placeholder="整段总结或选取片段总结"
             />
             <Textarea
               rows={3}
@@ -77,7 +87,7 @@ export function StepStoryboard({
       </div>
       <div className="mt-6 flex justify-end">
         <Button onClick={onNext} disabled={data.nodes.length === 0}>
-          继续：画风
+          继续 → 画风
         </Button>
       </div>
     </StepFrame>

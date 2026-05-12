@@ -28,22 +28,29 @@ export function StepShell({
   const router = useRouter();
   const sp = useSearchParams();
   const [data, setData] = useState<Data | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // 查询故事信息
   const reload = useCallback(
-    async () => api.getStory(storyId).then(setData),
+    async () =>
+      api.getStory(storyId).then((nextData) => {
+        setData(nextData);
+        setLoadError(null);
+      }),
     [storyId],
   );
 
   useEffect(() => {
-    reload().catch(() => {});
+    reload().catch((error: unknown) => {
+      setLoadError(error instanceof Error ? error.message : String(error));
+    });
   }, [reload]);
 
   if (!data) {
     return (
       <main className="story-bg flex min-h-screen items-center justify-center px-4">
         <div className="story-panel px-8 py-6 text-center font-black text-primary">
-          加载故事小剧场中…
+          {loadError ? `加载失败：${loadError}` : "加载故事小剧场中…"}
         </div>
       </main>
     );

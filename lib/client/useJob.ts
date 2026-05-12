@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 export interface JobState {
   status: "running" | "done" | "error";
   chunks: string;
-  progress?: { current: number; total: number };
+  progress?: { current: number; total: number; note?: string; nodeId?: string };
   result?: unknown;
   error?: string;
 }

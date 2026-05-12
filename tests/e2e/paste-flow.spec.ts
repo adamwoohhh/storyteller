@@ -6,7 +6,7 @@ test("paste mode runs character extraction and storyboard", async ({ page }) => 
   await page.goto("/");
   await page.getByRole("tab", { name: "粘贴完整故事" }).click();
   await page
-    .getByLabel("完整故事")
+    .getByRole("textbox", { name: "完整故事" })
     .fill("从前小红和小蓝在森林里走着。后来他们遇到了狼。最后大家成了朋友。");
   await page.getByRole("button", { name: "下一步" }).click();
 
