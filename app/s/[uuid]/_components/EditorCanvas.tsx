@@ -238,6 +238,7 @@ export function EditorCanvas({
           nodesConnectable={false}
           elementsSelectable
           fitView
+          proOptions={{ hideAttribution: true }}
         >
           <Background color="#d7bd8a" gap={24} />
           <MiniMap pannable zoomable />
