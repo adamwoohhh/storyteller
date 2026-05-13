@@ -31,12 +31,17 @@ import {
   getOrganizedNodePositions,
 } from "./editor-layout";
 import { toast } from "sonner";
-import { buildStoryGalleryItems } from "./image-gallery";
+import { buildStoryGalleryItems } from "../image-gallery";
 import {
   isBulkSceneRendering,
   renderProgressLabel,
   shouldAutoStartSceneRender,
 } from "./editor-render-state";
+import {
+  getNodeCardHeight,
+  getNodeImageLayout,
+  getNodeImageStatus,
+} from "./editor-node-image-state";
 
 const nodeTypes = { story: StoryNodeView };
 
@@ -68,14 +73,38 @@ export function EditorCanvas({
   const renderingNodeId = useMemo(() => {
     if (!isRenderingScenes) return null;
     const completed = renderJob.progress?.current ?? 0;
-    return sortedNodes.find((node: Any, index: number) => index >= completed && !node.imageId)?.id ?? null;
+    return (
+      renderJob.progress?.nodeId ??
+      sortedNodes.find((node: Any, index: number) => index >= completed && !node.imageId)?.id ??
+      null
+    );
   }, [isRenderingScenes, renderJob.progress, sortedNodes]);
+  const nodeDisplayStates = useMemo(
+    () =>
+      sortedNodes.map((n: Any, index: number) => {
+        const imageStatus = getNodeImageStatus({
+          imageId: n.imageId,
+          isRendering: n.id === renderingNodeId,
+        });
+        const imageLayout = getNodeImageLayout({ text: n.text, index });
+        const cardHeight = getNodeCardHeight({
+          text: n.text,
+          imageStatus,
+          imageLayout,
+        });
+
+        return { imageStatus, imageLayout, cardHeight };
+      }),
+    [sortedNodes, renderingNodeId],
+  );
   const initialNodes = useMemo<Node[]>(
     () =>
       sortedNodes.map((n: Any, index: number) => ({
         id: n.id,
         type: "story",
-        position: getEditorNodePosition(n, index, sortedNodes),
+        position: getEditorNodePosition(n, index, sortedNodes, {
+          nodeHeights: nodeDisplayStates.map((node) => node.cardHeight),
+        }),
         data: {
           id: n.id,
           text: n.text,
@@ -83,15 +112,16 @@ export function EditorCanvas({
           characters: n.characters,
           imagePrompt: n.imagePrompt,
           imageId: n.imageId,
-          isRendering: n.id === renderingNodeId,
-          imageSide: index % 2 === 0 ? "right" : "left",
+          imageStatus: nodeDisplayStates[index]!.imageStatus,
+          imageLayout: nodeDisplayStates[index]!.imageLayout,
+          cardHeight: nodeDisplayStates[index]!.cardHeight,
           story: data.story,
           allCharacters: data.characters,
           galleryItems,
           onChanged: reload,
         },
       })),
-    [sortedNodes, renderingNodeId, data.story, data.characters, galleryItems, reload],
+    [sortedNodes, nodeDisplayStates, data.story, data.characters, galleryItems, reload],
   );
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -104,15 +134,18 @@ export function EditorCanvas({
   }, [initialNodes, setNodes]);
 
   useEffect(() => {
+    // 检查 story 状态
     if (!shouldAutoStartSceneRender(data.story.status) || renderJobId || startingRenderRef.current) {
       return;
     }
 
+    // 启动节点插图渲染
     let cancelled = false;
     startingRenderRef.current = true;
     api
       .renderAll(data.story.id)
       .then((result) => {
+        // 渲染任务创建成功，触发监听
         if (!cancelled) setRenderJobId(result.jobId);
       })
       .catch((error: Error) => {
@@ -166,7 +199,10 @@ export function EditorCanvas({
       canvasWidth,
       nodeWidth: EDITOR_NODE_WIDTH,
       nodeHeight: EDITOR_NODE_HEIGHT,
-      nodeHeights: nodes.map((node) => node.height ?? EDITOR_NODE_HEIGHT),
+      nodeHeights: nodes.map((node) => {
+        const height = node.data?.cardHeight;
+        return typeof height === "number" ? height : (node.height ?? EDITOR_NODE_HEIGHT);
+      }),
       gapX: EDITOR_NODE_GAP_X,
       gapY: EDITOR_NODE_GAP_Y,
     });

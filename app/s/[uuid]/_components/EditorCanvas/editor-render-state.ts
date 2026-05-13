@@ -1,5 +1,10 @@
 type RenderProgress = { current: number; total: number } | undefined;
 
+/**
+ * 是否进入自动渲染，如果当前 story 状态是 cds_done，应该自动开始场景渲染
+ * @param storyStatus 
+ * @returns 
+ */
 export function shouldAutoStartSceneRender(storyStatus: string): boolean {
   return storyStatus === "cds_done";
 }

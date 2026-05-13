@@ -6,9 +6,13 @@ import { renderScene } from "@/lib/pipeline/scene-render";
 
 export const runtime = "nodejs";
 
+/**
+ * 启动故事全量渲染任务
+ */
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const rt = await getRuntime();
+  // 改写 story 状态为 rendering
   rt.db
     .update(stories)
     .set({ status: "rendering", updatedAt: sql`(unixepoch())` })

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getEditorNodePosition,
   getOrganizedNodePositions,
-} from "@/app/s/[uuid]/_components/editor-layout";
+} from "@/app/s/[uuid]/_components/EditorCanvas/editor-layout";
 
 describe("getEditorNodePosition", () => {
   it("spreads generated default vertical positions into a draggable grid", () => {
@@ -72,6 +72,26 @@ describe("getEditorNodePosition", () => {
       { x: 440, y: 0 },
       { x: 880, y: 0 },
       { x: 0, y: 348 },
+    ]);
+  });
+
+  it("uses dynamic node heights when reflowing generated default positions", () => {
+    const nodes = [
+      { id: "a", orderIndex: 0, positionX: 0, positionY: 0 },
+      { id: "b", orderIndex: 1, positionX: 0, positionY: 220 },
+      { id: "c", orderIndex: 2, positionX: 0, positionY: 440 },
+      { id: "d", orderIndex: 3, positionX: 0, positionY: 660 },
+    ];
+
+    expect(
+      nodes.map((node, index) =>
+        getEditorNodePosition(node, index, nodes, { nodeHeights: [260, 340, 300, 260] }),
+      ),
+    ).toEqual([
+      { x: 0, y: 0 },
+      { x: 440, y: 0 },
+      { x: 880, y: 0 },
+      { x: 0, y: 428 },
     ]);
   });
 });

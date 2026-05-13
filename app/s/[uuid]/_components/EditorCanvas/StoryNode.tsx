@@ -19,9 +19,14 @@ import {
   type PromptPreviewCharacter,
   type PromptPreviewStory,
 } from "./render-prompt-preview";
-import { type GalleryItem, ImageGalleryThumb } from "./image-gallery";
+import { type GalleryItem, ImageGalleryThumb } from "../image-gallery";
 import { cn } from "@/lib/utils";
 import { EDITOR_NODE_HEIGHT, EDITOR_NODE_WIDTH } from "./editor-layout";
+import {
+  getNodeImageStatus,
+  type NodeImageLayout,
+  type NodeImageStatus,
+} from "./editor-node-image-state";
 
 export interface StoryNodeData {
   id: string;
@@ -30,12 +35,13 @@ export interface StoryNodeData {
   characters: string;
   imagePrompt: string;
   imageId: string | null;
-  isRendering?: boolean;
-  imageSide?: "left" | "right";
+  imageStatus?: NodeImageStatus;
+  imageLayout?: NodeImageLayout;
+  cardHeight?: number;
   story: PromptPreviewStory;
   allCharacters: PromptPreviewCharacter[];
   galleryItems: GalleryItem[];
-  onChanged: () => void;
+  onChanged: () => Promise<void>;
 }
 
 export function StoryNodeView({ data }: { data: StoryNodeData }) {
@@ -74,9 +80,9 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
 
   useEffect(() => {
     if (job.status === "done" && jobId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setJobId(null);
-      data.onChanged();
+      data.onChanged().finally(() => {
+        setJobId(null);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [job.status]);
@@ -86,47 +92,45 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
     setOpen(nextOpen);
   }
 
-  const isNodeRendering = data.isRendering || (!!jobId && job.status === "running");
-
-  const hasInlineImage = Boolean(data.imageId || isNodeRendering);
-  const imageSide = data.imageSide ?? "right";
+  const isLocalRendering = !!jobId && job.status === "running";
+  const imageStatus = isLocalRendering
+    ? getNodeImageStatus({ imageId: data.imageId, isRendering: true })
+    : (data.imageStatus ?? getNodeImageStatus({ imageId: data.imageId, isRendering: false }));
+  const imageLayout = data.imageLayout ?? "inline-right";
+  const hasVisual = imageStatus !== "idle";
+  const isNodeRendering = imageStatus === "generating";
+  const isStacked = imageLayout === "stacked-image-top" || imageLayout === "stacked-image-bottom";
+  const showStackedTop = hasVisual && imageLayout === "stacked-image-top";
+  const showStackedBottom = hasVisual && imageLayout === "stacked-image-bottom";
+  const imageSide = imageLayout === "inline-left" ? "left" : "right";
+  const cardHeight = data.cardHeight ?? EDITOR_NODE_HEIGHT;
 
   return (
     <div
       className="overflow-hidden rounded-[1.25rem] border-2 border-[#5a3029] bg-card shadow-[7px_7px_0_#bed18a]"
-      style={{ width: EDITOR_NODE_WIDTH, height: EDITOR_NODE_HEIGHT }}
+      style={{ width: EDITOR_NODE_WIDTH, height: cardHeight }}
     >
       <Handle type="target" position={Position.Top} />
       <div className="flex h-full flex-col gap-3 p-4">
-        <div className="min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap pr-1 text-sm leading-6">
-          {hasInlineImage && (
-            <div
+        <div className="min-h-0 flex-1 whitespace-pre-wrap text-sm leading-6">
+          {showStackedTop && (
+            <NodeImage data={data} imageStatus={imageStatus} className="mb-3 h-32 w-full" />
+          )}
+          {hasVisual && !isStacked && (
+            <NodeImage
+              data={data}
+              imageStatus={imageStatus}
               className={cn(
-                "mb-2 size-32 overflow-hidden rounded-2xl border border-[#5a3029]/20 bg-muted",
+                "mb-2 size-32",
                 imageSide === "left" ? "float-left mr-3" : "float-right ml-3",
               )}
-            >
-              {data.imageId ? (
-                <ImageGalleryThumb
-                  items={data.galleryItems}
-                  assetId={data.imageId}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs font-black text-muted-foreground">
-                  生成中…
-                </div>
-              )}
-            </div>
+            />
           )}
-          {data.text}
+          <span>{data.text}</span>
+          {showStackedBottom && (
+            <NodeImage data={data} imageStatus={imageStatus} className="mt-3 h-32 w-full" />
+          )}
         </div>
-        {data.summary && (
-          <div className="max-h-14 overflow-y-auto rounded-2xl border border-[#5a3029]/15 bg-[#fff8e8] p-2 text-xs leading-5 text-muted-foreground">
-            {data.summary}
-          </div>
-        )}
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -135,7 +139,7 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
             onClick={() => changeOpen(true)}
             disabled={isNodeRendering}
           >
-            重生图
+            {data.imageId ? "重生图" : "生成插图"}
           </Button>
         </div>
       </div>
@@ -208,12 +212,44 @@ export function StoryNodeView({ data }: { data: StoryNodeData }) {
             <Button variant="outline" onClick={() => changeOpen(false)}>
               取消
             </Button>
-            <Button onClick={saveAndRegen} disabled={saving || (!!jobId && job.status === "running")}>
-              {saving || (!!jobId && job.status === "running") ? "生成中…" : "保存并重生图"}
+            <Button onClick={saveAndRegen} disabled={saving || isLocalRendering}>
+              {saving || isLocalRendering ? "生成中…" : "保存并生成"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function NodeImage({
+  data,
+  imageStatus,
+  className,
+}: {
+  data: StoryNodeData;
+  imageStatus: NodeImageStatus;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "overflow-hidden rounded-2xl border border-[#5a3029]/20 bg-muted",
+        className,
+      )}
+    >
+      {imageStatus === "generated" && data.imageId ? (
+        <ImageGalleryThumb
+          items={data.galleryItems}
+          assetId={data.imageId}
+          alt=""
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-xs font-black text-muted-foreground">
+          生成中…
+        </div>
+      )}
     </div>
   );
 }

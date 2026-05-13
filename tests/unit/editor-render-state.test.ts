@@ -3,7 +3,7 @@ import {
   isBulkSceneRendering,
   renderProgressLabel,
   shouldAutoStartSceneRender,
-} from "@/app/s/[uuid]/_components/editor-render-state";
+} from "@/app/s/[uuid]/_components/EditorCanvas/editor-render-state";
 
 describe("editor render state", () => {
   it("auto-starts scene rendering only after CDS is done", () => {

@@ -40,6 +40,7 @@ export function getEditorNodePosition(
   node: EditorLayoutNode,
   index: number,
   nodes: EditorLayoutNode[],
+  opts?: { nodeHeights?: number[] },
 ): { x: number; y: number } {
   const shouldReflow =
     hasGeneratedDefaultPosition(node, index) ||
@@ -52,9 +53,20 @@ export function getEditorNodePosition(
     };
   }
 
+  const row = Math.floor(index / GRID_COLUMNS);
+  const y = Array.from({ length: row }, (_, rowIndex) => {
+    const rowStart = rowIndex * GRID_COLUMNS;
+    const rowEnd = Math.min(rowStart + GRID_COLUMNS, nodes.length);
+    const rowHeights = Array.from({ length: rowEnd - rowStart }, (_, offset) => {
+      const height = opts?.nodeHeights?.[rowStart + offset];
+      return Number.isFinite(height) && height ? height : EDITOR_NODE_HEIGHT;
+    });
+    return Math.max(...rowHeights, EDITOR_NODE_HEIGHT) + EDITOR_NODE_GAP_Y;
+  }).reduce((total, rowHeight) => total + rowHeight, 0);
+
   return {
     x: (index % GRID_COLUMNS) * (EDITOR_NODE_WIDTH + EDITOR_NODE_GAP_X),
-    y: Math.floor(index / GRID_COLUMNS) * (EDITOR_NODE_HEIGHT + EDITOR_NODE_GAP_Y),
+    y,
   };
 }
 

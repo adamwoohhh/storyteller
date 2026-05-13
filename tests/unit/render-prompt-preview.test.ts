@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRenderPromptPreview } from "@/app/s/[uuid]/_components/render-prompt-preview";
+import { buildRenderPromptPreview } from "@/app/s/[uuid]/_components/EditorCanvas/render-prompt-preview";
 
 describe("buildRenderPromptPreview", () => {
   it("builds the same prompt sections used for scene rendering", () => {
