@@ -34,4 +34,11 @@ ensure_pnpm
 # install dependencies
 pnpm i --registry https://bnpm.byted.org
 
+# build
 pnpm run build
+
+# mkdir outout dir
+mkdir -p output/_next
+
+# copy files
+cp -RL .next/static output/_next
