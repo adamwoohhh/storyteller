@@ -10,6 +10,6 @@ source /etc/profile
 # nvm use 22
 
 # install dependencies
-pnpm i
+pnpm i --registry https://bnpm.byted.org
 
 pnpm run build
