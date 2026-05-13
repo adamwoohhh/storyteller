@@ -21,6 +21,8 @@
   --radius-lg: 1.5rem;
   --story-shadow: 8px 8px 0 #d9b76f;
   --story-shadow-green: 8px 8px 0 #bed18a;
+  --font-geist-sans: Arial, Helvetica, sans-serif;
+  --font-geist-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
 @theme inline {
