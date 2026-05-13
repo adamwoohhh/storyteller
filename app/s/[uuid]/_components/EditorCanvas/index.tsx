@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -11,7 +11,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import Link from "next/link";
-import { BookOpen, LayoutDashboard, Rows3 } from "lucide-react";
+import { BookOpen, LayoutDashboard, RefreshCw, Rows3 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { StoryNodeView } from "./StoryNode";
 import { api } from "@/lib/client/api";
@@ -63,6 +63,7 @@ export function EditorCanvas({
   );
   const galleryItems = useMemo(() => buildStoryGalleryItems(data), [data]);
   const [renderJobId, setRenderJobId] = useState<string | null>(null);
+  const [startingRender, setStartingRender] = useState(false);
   const startingRenderRef = useRef(false);
   const renderJob = useJob(renderJobId);
   const isRenderingScenes = isBulkSceneRendering({
@@ -128,6 +129,28 @@ export function EditorCanvas({
   const flowRef = useRef<ReactFlowInstance | null>(null);
   const [organizing, setOrganizing] = useState(false);
   const modeAction = getStoryModeAction("edit");
+  const partialRenderFailureCount = useMemo(() => {
+    const result = renderJob.result;
+    if (typeof result !== "object" || result === null || !("errors" in result)) return 0;
+    const errors = (result as { errors?: unknown }).errors;
+    return Array.isArray(errors) ? errors.length : 0;
+  }, [renderJob.result]);
+
+  const startRenderAll = useCallback(async () => {
+    if (startingRenderRef.current) return;
+
+    startingRenderRef.current = true;
+    setStartingRender(true);
+    try {
+      const result = await api.renderAll(data.story.id);
+      setRenderJobId(result.jobId);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "启动插图生成失败");
+    } finally {
+      startingRenderRef.current = false;
+      setStartingRender(false);
+    }
+  }, [data.story.id]);
 
   useEffect(() => {
     setNodes(initialNodes);
@@ -140,25 +163,8 @@ export function EditorCanvas({
     }
 
     // 启动节点插图渲染
-    let cancelled = false;
-    startingRenderRef.current = true;
-    api
-      .renderAll(data.story.id)
-      .then((result) => {
-        // 渲染任务创建成功，触发监听
-        if (!cancelled) setRenderJobId(result.jobId);
-      })
-      .catch((error: Error) => {
-        toast.error(error.message || "启动插图生成失败");
-      })
-      .finally(() => {
-        if (!cancelled) startingRenderRef.current = false;
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [data.story.id, data.story.status, renderJobId]);
+    void startRenderAll();
+  }, [data.story.status, renderJobId, startRenderAll]);
 
   useEffect(() => {
     if (!renderJob.progress) return;
@@ -167,6 +173,11 @@ export function EditorCanvas({
 
   useEffect(() => {
     if (renderJob.status !== "done" || !renderJobId) return;
+    reload().catch(() => {});
+  }, [renderJob.status, renderJobId, reload]);
+
+  useEffect(() => {
+    if (renderJob.status !== "partial_error" || !renderJobId) return;
     reload().catch(() => {});
   }, [renderJob.status, renderJobId, reload]);
 
@@ -243,6 +254,17 @@ export function EditorCanvas({
               生成插图{" "}
               {renderProgressLabel({ progress: renderJob.progress, totalNodes: sortedNodes.length })}
             </div>
+          )}
+          {renderJob.status === "partial_error" && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={startRenderAll}
+              disabled={startingRender}
+            >
+              <RefreshCw className="size-4" />
+              重试失败{partialRenderFailureCount > 0 ? ` ${partialRenderFailureCount}` : ""}
+            </Button>
           )}
           <Link
             href={ADMIN_STORIES_HREF}

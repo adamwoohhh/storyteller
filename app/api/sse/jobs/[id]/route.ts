@@ -9,6 +9,15 @@ function pack(event: string, data: unknown): string {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
+function parseJobResult(result: string | null): unknown {
+  if (!result) return null;
+  try {
+    return JSON.parse(result);
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const rt = await getRuntime();
@@ -22,12 +31,18 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         controller.close();
         return;
       }
-      if (job.status === "done" || job.status === "error" || job.status === "canceled") {
+      if (
+        job.status === "done" ||
+        job.status === "partial_error" ||
+        job.status === "error" ||
+        job.status === "canceled"
+      ) {
         controller.enqueue(
           enc.encode(
-            pack(job.status === "done" ? "done" : "error", {
+            pack(job.status === "done" || job.status === "partial_error" ? job.status : "error", {
               status: job.status,
               error: job.error ?? null,
+              result: parseJobResult(job.result),
             }),
           ),
         );
@@ -36,7 +51,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       }
       const unsub = rt.bus.subscribe(id, (e) => {
         controller.enqueue(enc.encode(pack(e.type, e.data)));
-        if (e.type === "done" || e.type === "error") {
+        if (e.type === "done" || e.type === "partial_error" || e.type === "error") {
           controller.close();
           unsub();
         }

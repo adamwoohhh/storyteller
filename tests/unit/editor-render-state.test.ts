@@ -17,6 +17,8 @@ describe("editor render state", () => {
       .toBe(true);
     expect(isBulkSceneRendering({ storyStatus: "rendering", jobId: null })).toBe(true);
     expect(isBulkSceneRendering({ storyStatus: "done", jobId: null })).toBe(false);
+    expect(isBulkSceneRendering({ storyStatus: "done", jobId: "job-1", jobStatus: "partial_error" }))
+      .toBe(false);
   });
 
   it("formats streaming progress with the node count as a fallback", () => {

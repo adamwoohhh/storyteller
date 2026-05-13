@@ -10,6 +10,36 @@ export interface JobContext {
   publish: (e: SseEvent) => void;
 }
 
+type SuccessStatus = "done" | "partial_error";
+
+interface JobCompletion<T> {
+  data: T;
+  status: SuccessStatus;
+  error: string | null;
+}
+
+export function jobCompletion<T>(
+  data: T,
+  options?: { status?: SuccessStatus; error?: string | null },
+): JobCompletion<T> {
+  return {
+    data,
+    status: options?.status ?? "done",
+    error: options?.error ?? null,
+  };
+}
+
+function isJobCompletion(value: unknown): value is JobCompletion<unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "data" in value &&
+    "status" in value &&
+    ((value as { status?: unknown }).status === "done" ||
+      (value as { status?: unknown }).status === "partial_error")
+  );
+}
+
 /**
  * 使用队列管理器执行一个任务，并根据任务执行状态修改 bd 中的记录，同时通过 sse bus 向前端推送任务执行的状态和结果
  */
@@ -31,12 +61,21 @@ export async function runJob<T>(args: {
       .where(eq(jobs.id, jobId))
       .run();
     try {
-      result = await fn({ db, signal, publish: (e) => bus.publish(jobId, e) });
+      const rawResult = await fn({ db, signal, publish: (e) => bus.publish(jobId, e) });
+      const completion = isJobCompletion(rawResult) ? rawResult : jobCompletion(rawResult);
+      result = completion.data as T;
+      const serializedResult =
+        completion.data === undefined ? null : JSON.stringify(completion.data);
       db.update(jobs)
-        .set({ status: "done", updatedAt: sql`(unixepoch())` })
+        .set({
+          status: completion.status,
+          error: completion.error,
+          result: serializedResult,
+          updatedAt: sql`(unixepoch())`,
+        })
         .where(eq(jobs.id, jobId))
         .run();
-      bus.publish(jobId, { type: "done", data: result });
+      bus.publish(jobId, { type: completion.status, data: result });
     } catch (err) {
       caught = err;
       const msg = err instanceof Error ? err.message : String(err);

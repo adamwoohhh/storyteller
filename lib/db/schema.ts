@@ -79,10 +79,11 @@ export const jobs = sqliteTable("jobs", {
     ],
   }).notNull(),
   targetId: text("target_id"),
-  status: text("status", { enum: ["pending", "running", "done", "error", "canceled"] })
+  status: text("status", { enum: ["pending", "running", "done", "partial_error", "error", "canceled"] })
     .notNull()
     .default("pending"),
   error: text("error"),
+  result: text("result"),
   createdAt: integer("created_at").notNull().default(sql`(unixepoch())`),
   updatedAt: integer("updated_at").notNull().default(sql`(unixepoch())`),
 });

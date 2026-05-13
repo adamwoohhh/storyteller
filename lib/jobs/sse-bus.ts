@@ -2,6 +2,7 @@ export type SseEvent =
   | { type: "chunk"; data: string }
   | { type: "progress"; data: { current: number; total: number; note?: string; nodeId?: string } }
   | { type: "done"; data: unknown }
+  | { type: "partial_error"; data: unknown }
   | { type: "error"; data: { message: string } };
 
 type Listener = (e: SseEvent) => void;
