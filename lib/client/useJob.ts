@@ -10,7 +10,7 @@ export interface JobState {
 }
 
 export function useJob(jobId: string | null): JobState {
-  const [state, setState] = useState<JobState>({ status: "running", chunks: "" });
+  const [state, setState] = useState<JobState>({ status: "done", chunks: "" });
 
   useEffect(() => {
     if (!jobId) return;
@@ -38,5 +38,6 @@ export function useJob(jobId: string | null): JobState {
     return () => es.close();
   }, [jobId]);
 
+  if (!jobId) return { status: "done", chunks: "" };
   return state;
 }

@@ -2,6 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import type { DB } from "@/lib/db/client";
 import { stories, characters as charactersTable } from "@/lib/db/schema";
 import type { TextProvider } from "@/lib/providers/types";
+import { invalidateAfterStoryText } from "./workflow-invalidation";
 
 export async function generateStoryText(args: {
   db: DB;
@@ -43,5 +44,6 @@ export async function generateStoryText(args: {
     .set({ storyText: full, status: "text_done", updatedAt: sql`(unixepoch())` })
     .where(eq(stories.id, storyId))
     .run();
+  invalidateAfterStoryText(db, storyId);
   return full;
 }

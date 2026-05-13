@@ -4,6 +4,7 @@ import type { DB } from "@/lib/db/client";
 import { stories, characters as charactersTable, nodes } from "@/lib/db/schema";
 import type { TextProvider } from "@/lib/providers/types";
 import { splitStoryParagraphs, storyTextFromParagraphs } from "@/lib/story-paragraphs";
+import { invalidateAfterStoryboard } from "./workflow-invalidation";
 
 export async function generateStoryboard(args: {
   db: DB;
@@ -96,5 +97,6 @@ export async function generateStoryboard(args: {
     .set({ status: "storyboard_done", updatedAt: sql`(unixepoch())` })
     .where(eq(stories.id, storyId))
     .run();
+  invalidateAfterStoryboard(db, storyId);
   return result;
 }

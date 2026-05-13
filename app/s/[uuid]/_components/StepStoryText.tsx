@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/client/api";
@@ -24,7 +23,6 @@ export function StepStoryText({
 }) {
   const [jobId, setJobId] = useState<string | null>(null);
   const job = useJob(jobId);
-  const [edited, setEdited] = useState<string>(data.story.storyText ?? "");
   const [revisePrompt, setRevisePrompt] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -49,11 +47,6 @@ export function StepStoryText({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [job.status]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEdited(data.story.storyText ?? "");
-  }, [data.story.storyText]);
-
   async function revise() {
     if (!revisePrompt.trim()) return;
     const { jobId } = await api.reviseText(data.story.id, revisePrompt.trim());
@@ -64,7 +57,7 @@ export function StepStoryText({
   async function saveEdit() {
     setSaving(true);
     try {
-      await api.patchStory(data.story.id, { storyText: edited });
+      await api.patchStory(data.story.id, { storyText: data.story.storyText ?? "" });
       await reload();
       toast.success("已保存");
     } finally {
@@ -72,9 +65,8 @@ export function StepStoryText({
     }
   }
 
-  const liveText = job.status === "running" ? job.chunks : edited;
+  const liveText = job.status === "running" ? job.chunks : data.story.storyText ?? "";
   const isStreaming = job.status === "running";
-  const liveParagraphs = splitStoryParagraphs(liveText);
 
   return (
     <StepFrame
@@ -82,44 +74,28 @@ export function StepStoryText({
       description="先把故事揉成一篇完整草稿，再决定下一幕怎么分镜。"
       currentStep="story"
     >
-      {isStreaming ? (
-        <StoryParagraphPreview text={liveText} showCursor />
-      ) : (
-        <>
-          <Textarea rows={18} value={edited} onChange={(e) => setEdited(e.target.value)} />
-          {liveParagraphs.length > 1 && (
-            <div className="mt-5">
-              <StoryParagraphPreview text={edited} />
-            </div>
-          )}
-        </>
-      )}
+      <StoryParagraphPreview text={liveText} showCursor={isStreaming} />
       {!isStreaming && (
         <>
-          <div className="mt-4 flex gap-2">
-            <Button variant="outline" size="sm" onClick={saveEdit} disabled={saving}>
-              {saving ? "保存中…" : "保存编辑"}
-            </Button>
-          </div>
-          <div className="mt-5 space-y-3 rounded-3xl border border-border bg-[#fff8e8] p-4">
-            <Label className="font-black text-foreground">
+          <div className="mt-6 space-y-3 rounded-3xl border border-border bg-[#fff8e8] p-4">
+            <Label htmlFor="revise-prompt" className="font-black text-foreground">
               修订提示词（让模型按要求改写整篇）
             </Label>
             <Input
+              id="revise-prompt"
               value={revisePrompt}
               onChange={(e) => setRevisePrompt(e.target.value)}
               placeholder="例：让结尾更温馨；加快中段节奏"
             />
-            <Button
-              variant="secondary"
-              onClick={revise}
-              disabled={!revisePrompt.trim()}
-            >
-              按提示词重新生成
-            </Button>
           </div>
-          <div className="mt-6 flex justify-end">
-            <Button onClick={onNext} disabled={!edited.trim()}>
+          <div className="mt-6 flex flex-wrap justify-end gap-2">
+            <Button variant="secondary" onClick={revise} disabled={!revisePrompt.trim()}>
+              修改故事
+            </Button>
+            <Button variant="outline" onClick={saveEdit} disabled={saving || !liveText.trim()}>
+              {saving ? "保存中…" : "保存文本"}
+            </Button>
+            <Button onClick={onNext} disabled={!liveText.trim()}>
               继续 → 分镜
             </Button>
           </div>

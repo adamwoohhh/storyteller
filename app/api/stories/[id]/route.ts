@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getRuntime } from "@/lib/runtime";
 import { stories } from "@/lib/db/schema";
 import { getActiveStoryBundle, logicallyDeleteStory } from "@/lib/stories/admin";
+import { invalidateAfterStoryText } from "@/lib/pipeline/workflow-invalidation";
 
 export const runtime = "nodejs";
 
@@ -35,6 +36,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .set({ ...body, updatedAt: sql`(unixepoch())` })
     .where(eq(stories.id, id))
     .run();
+  if (body.storyText !== undefined) {
+    invalidateAfterStoryText(db, id);
+  }
   return NextResponse.json(db.select().from(stories).where(eq(stories.id, id)).get());
 }
 

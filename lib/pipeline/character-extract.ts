@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import type { DB } from "@/lib/db/client";
 import { stories, characters } from "@/lib/db/schema";
 import type { TextProvider } from "@/lib/providers/types";
+import { invalidateAfterCharacters } from "./workflow-invalidation";
 
 export async function extractCharacters(args: {
   db: DB;
@@ -13,6 +14,7 @@ export async function extractCharacters(args: {
   const row = db.select().from(stories).where(eq(stories.id, storyId)).get();
   if (!row) throw new Error(`story not found: ${storyId}`);
   const extracted = await provider.extractCharacters(row.storyText);
+  db.delete(characters).where(eq(characters.storyId, storyId)).run();
   const inserted: { id: string; name: string; description: string }[] = [];
   for (const c of extracted) {
     const id = randomUUID();
@@ -26,5 +28,6 @@ export async function extractCharacters(args: {
       .run();
     inserted.push({ id, name: c.name, description: c.description });
   }
+  invalidateAfterCharacters(db, storyId);
   return inserted;
 }

@@ -1,14 +1,29 @@
+"use client";
+
 import { cn } from "@/lib/utils";
+import { WORKFLOW_STEPS, type WorkflowStep } from "@/lib/workflow-steps";
+import { createContext, useContext } from "react";
 
-const steps = [
-  { id: "story", label: "故事" },
-  { id: "extract", label: "角色" },
-  { id: "storyboard", label: "分镜" },
-  { id: "style", label: "画风" },
-  { id: "cds", label: "角色图" },
-] as const;
+type StepNavigation = {
+  accessibleSteps: WorkflowStep[];
+  onStepSelect: (step: WorkflowStep) => void;
+};
 
-export type WorkflowStep = (typeof steps)[number]["id"];
+const StepNavigationContext = createContext<StepNavigation | null>(null);
+
+export function StepNavigationProvider({
+  value,
+  children,
+}: {
+  value: StepNavigation;
+  children: React.ReactNode;
+}) {
+  return (
+    <StepNavigationContext.Provider value={value}>
+      {children}
+    </StepNavigationContext.Provider>
+  );
+}
 
 export function StepFrame({
   title,
@@ -23,19 +38,34 @@ export function StepFrame({
   children: React.ReactNode;
   className?: string;
 }) {
+  const navigation = useContext(StepNavigationContext);
+
   return (
     <main className="story-bg min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className={cn("mx-auto flex w-full max-w-4xl flex-col items-center", className)}>
-        <div className="mb-6 flex flex-wrap justify-center gap-2">
-          {steps.map((step) => (
-            <span
-              key={step.id}
-              className={cn("story-chip", step.id === currentStep && "story-chip-active")}
-            >
-              {step.label}
-            </span>
-          ))}
-        </div>
+        <nav className="mb-6 flex flex-wrap justify-center gap-2" aria-label="创作步骤">
+          {WORKFLOW_STEPS.map((step) => {
+            const isActive = step.id === currentStep;
+            const canNavigate = navigation?.accessibleSteps.includes(step.id) ?? false;
+            return (
+              <button
+                key={step.id}
+                type="button"
+                className={cn(
+                  "story-chip transition",
+                  isActive && "story-chip-active",
+                  !canNavigate && "cursor-not-allowed opacity-45",
+                  canNavigate && !isActive && "hover:-translate-y-0.5 hover:bg-secondary",
+                )}
+                disabled={!canNavigate || isActive}
+                aria-current={isActive ? "step" : undefined}
+                onClick={() => navigation?.onStepSelect(step.id)}
+              >
+                {step.label}
+              </button>
+            );
+          })}
+        </nav>
 
         <header className="mb-7 max-w-2xl text-center">
           <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-[1.4rem] border-2 border-[#5a3029] bg-secondary shadow-[0_5px_0_#5a3029]">

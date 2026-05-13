@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getRuntime, startJob } from "@/lib/runtime";
 import { stories } from "@/lib/db/schema";
 import { generateCDSText } from "@/lib/pipeline/character-design-text";
+import { invalidateAfterStyle } from "@/lib/pipeline/workflow-invalidation";
 
 export const runtime = "nodejs";
 const Body = z.object({
@@ -25,6 +26,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     })
     .where(eq(stories.id, id))
     .run();
+  invalidateAfterStyle(rt.db, id);
   const jobId = await startJob({
     rt,
     storyId: id,

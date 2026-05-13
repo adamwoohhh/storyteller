@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/client/api";
 import { useJob } from "@/lib/client/useJob";
@@ -22,7 +23,6 @@ export function StepStoryboard({
 }) {
   const [jobId, setJobId] = useState<string | null>(null);
   const job = useJob(jobId);
-  const isPaste = data.story.inputMode === "paste";
 
   useEffect(() => {
     if (data.nodes.length === 0 && jobId === null) {
@@ -63,25 +63,26 @@ export function StepStoryboard({
               <div className="mb-2 text-xs font-black text-muted-foreground">原始段落</div>
               <div className="whitespace-pre-wrap text-sm leading-6">{n.text}</div>
             </div>
-            <Textarea
-              rows={3}
-              value={n.text}
-              disabled={isPaste}
-              onChange={(e) => patch(n.id, { text: e.target.value })}
-              placeholder="节点文本"
-            />
-            <Textarea
-              rows={2}
-              value={n.summary ?? ""}
-              onChange={(e) => patch(n.id, { summary: e.target.value })}
-              placeholder="整段总结或选取片段总结"
-            />
-            <Textarea
-              rows={3}
-              value={n.imagePrompt}
-              onChange={(e) => patch(n.id, { imagePrompt: e.target.value })}
-              placeholder="image_prompt（用于生图）"
-            />
+            <div className="space-y-2">
+              <Label htmlFor={`summary-${n.id}`}>段落总结</Label>
+              <Textarea
+                id={`summary-${n.id}`}
+                rows={2}
+                value={n.summary ?? ""}
+                onChange={(e) => patch(n.id, { summary: e.target.value })}
+                placeholder="整段总结或选取片段总结"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`image-prompt-${n.id}`}>画面提示词</Label>
+              <Textarea
+                id={`image-prompt-${n.id}`}
+                rows={3}
+                value={n.imagePrompt}
+                onChange={(e) => patch(n.id, { imagePrompt: e.target.value })}
+                placeholder="image_prompt（用于生图）"
+              />
+            </div>
           </Card>
         ))}
       </div>
