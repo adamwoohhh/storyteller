@@ -10,6 +10,13 @@ export type CharacterCDSState = CDSDraft & {
   cdsImageId?: string | null;
 };
 
+export type CharacterProfileDraft = {
+  name: string;
+  userInput: string;
+  userImageId?: string | null;
+  preserveWorkflow?: boolean;
+};
+
 export function hasCompleteCDSDraft(draft: CDSDraft): boolean {
   return [
     draft.cdsAppearance,
@@ -40,6 +47,18 @@ export async function saveAndRenderCharacter({
 }): Promise<{ jobId: string }> {
   await patchCharacter(characterId, draft);
   return renderCharacter(characterId);
+}
+
+export async function saveCharacterProfile({
+  characterId,
+  profile,
+  patchCharacter,
+}: {
+  characterId: string;
+  profile: CharacterProfileDraft;
+  patchCharacter: (characterId: string, body: CharacterProfileDraft) => Promise<unknown>;
+}): Promise<void> {
+  await patchCharacter(characterId, profile);
 }
 
 export async function startBatchRenderCharacters<T extends CharacterCDSState>({

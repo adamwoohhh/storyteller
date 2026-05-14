@@ -3,7 +3,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/client/api";
 import { StepStoryText } from "./StepStoryText";
-import { StepExtract } from "./StepExtract";
 import { StepStoryboard } from "./StepStoryboard";
 import { StepArtStyle } from "./StepArtStyle";
 import { StepCDS } from "./StepCDS";
@@ -122,11 +121,7 @@ export function StepShell({
   switch (step) {
     case "story":
       return wrapStep(
-        <StepStoryText data={data} onNext={() => goto("extract")} reload={reload} />
-      );
-    case "extract":
-      return wrapStep(
-        <StepExtract data={data} onNext={() => goto("storyboard")} reload={reload} />
+        <StepStoryText data={data} onNext={() => goto("storyboard")} reload={reload} />
       );
     case "storyboard":
       return wrapStep(

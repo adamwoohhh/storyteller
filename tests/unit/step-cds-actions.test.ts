@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   getCharactersNeedingCDSImage,
   hasCompleteCDSDraft,
+  saveCharacterProfile,
   saveAndRenderCharacter,
   startBatchRenderCharacters,
 } from "@/app/s/[uuid]/_components/StepCDS/step-cds-actions";
@@ -38,6 +39,28 @@ describe("saveAndRenderCharacter", () => {
     });
     expect(renderCharacter).toHaveBeenCalledWith("char-1");
     expect(calls).toEqual(["patch", "render"]);
+  });
+});
+
+describe("saveCharacterProfile", () => {
+  it("patches editable character profile fields", async () => {
+    const patchCharacter = vi.fn(async () => ({ ok: true }));
+
+    await saveCharacterProfile({
+      characterId: "char-1",
+      profile: {
+        name: "小兔",
+        userInput: "勇敢的主角",
+        userImageId: "asset-1",
+      },
+      patchCharacter,
+    });
+
+    expect(patchCharacter).toHaveBeenCalledWith("char-1", {
+      name: "小兔",
+      userInput: "勇敢的主角",
+      userImageId: "asset-1",
+    });
   });
 });
 

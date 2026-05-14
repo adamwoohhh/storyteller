@@ -7,10 +7,10 @@ describe("story step redirect helper", () => {
       getStoryStepRedirectHref({
         storyId: "story-1",
         step: "cds",
-        currentWorkflowStep: "extract",
-        accessibleSteps: ["story", "extract"],
+        currentWorkflowStep: "storyboard",
+        accessibleSteps: ["story", "storyboard"],
       }),
-    ).toBe("/s/story-1?step=extract");
+    ).toBe("/s/story-1?step=storyboard");
   });
 
   it("redirects completed stories to edit mode when no workflow step is current", () => {
@@ -19,7 +19,7 @@ describe("story step redirect helper", () => {
         storyId: "story-1",
         step: "auto",
         currentWorkflowStep: null,
-        accessibleSteps: ["story", "extract", "storyboard", "style", "cds"],
+        accessibleSteps: ["story", "storyboard", "style", "cds"],
       }),
     ).toBe("/s/story-1?mode=edit");
   });
@@ -28,9 +28,9 @@ describe("story step redirect helper", () => {
     expect(
       getStoryStepRedirectHref({
         storyId: "story-1",
-        step: "extract",
-        currentWorkflowStep: "extract",
-        accessibleSteps: ["story", "extract"],
+        step: "storyboard",
+        currentWorkflowStep: "storyboard",
+        accessibleSteps: ["story", "storyboard"],
       }),
     ).toBeNull();
   });
@@ -41,7 +41,7 @@ describe("story step redirect helper", () => {
         storyId: "story-1",
         step: "auto",
         currentWorkflowStep: "style",
-        accessibleSteps: ["story", "extract", "storyboard", "style"],
+        accessibleSteps: ["story", "storyboard", "style"],
         usesModeNavigation: true,
       }),
     ).toBeNull();

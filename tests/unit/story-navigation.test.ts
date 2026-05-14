@@ -29,30 +29,30 @@ describe("story navigation helpers", () => {
   it("allows completed and current workflow steps only", () => {
     const state = { status: "text_done", inputMode: "paste", characterCount: 3 };
 
-    expect(getCompletedWorkflowSteps(state)).toEqual(["story", "extract"]);
+    expect(getCompletedWorkflowSteps(state)).toEqual(["story"]);
     expect(getCurrentWorkflowStep(state)).toBe("storyboard");
-    expect(getAccessibleWorkflowSteps(state)).toEqual(["story", "extract", "storyboard"]);
+    expect(getAccessibleWorkflowSteps(state)).toEqual(["story", "storyboard"]);
   });
 
-  it("treats structured characters as already confirmed after story text", () => {
+  it("does not expose a separate character confirmation step", () => {
     const state = { status: "text_done", inputMode: "structured", characterCount: 1 };
 
-    expect(getCompletedWorkflowSteps(state)).toEqual(["story", "extract"]);
+    expect(getCompletedWorkflowSteps(state)).toEqual(["story"]);
     expect(getCurrentWorkflowStep(state)).toBe("storyboard");
   });
 
-  it("keeps character confirmation as current when a structured story has no characters", () => {
+  it("moves from story text to storyboard even when no characters are present", () => {
     const state = { status: "text_done", inputMode: "structured", characterCount: 0 };
 
     expect(getCompletedWorkflowSteps(state)).toEqual(["story"]);
-    expect(getCurrentWorkflowStep(state)).toBe("extract");
-    expect(getAccessibleWorkflowSteps(state)).toEqual(["story", "extract"]);
+    expect(getCurrentWorkflowStep(state)).toBe("storyboard");
+    expect(getAccessibleWorkflowSteps(state)).toEqual(["story", "storyboard"]);
   });
 
-  it("marks character confirmation complete once storyboard exists even without characters", () => {
+  it("does not include character confirmation once storyboard exists", () => {
     const state = { status: "storyboard_done", inputMode: "paste", characterCount: 0 };
 
-    expect(getCompletedWorkflowSteps(state)).toEqual(["story", "extract", "storyboard"]);
+    expect(getCompletedWorkflowSteps(state)).toEqual(["story", "storyboard"]);
     expect(getCurrentWorkflowStep(state)).toBe("style");
   });
 });

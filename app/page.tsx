@@ -55,7 +55,7 @@ export default function Home() {
               characters: [],
             };
       const { id } = await api.createStory(body);
-      router.push(`/s/${id}?step=${mode === "paste" ? "extract" : "story"}`);
+      router.push(`/s/${id}?step=${mode === "paste" ? "storyboard" : "story"}`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "创建失败";
       toast.error(msg);
