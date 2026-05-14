@@ -1,6 +1,15 @@
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
-import { assets, characters, nodes, stories } from "@/lib/db/schema";
+import { assets, characters, jobs, nodes, stories } from "@/lib/db/schema";
 import type { DB } from "@/lib/db/client";
+
+function parseJsonResult(result: string | null): unknown {
+  if (!result) return undefined;
+  try {
+    return JSON.parse(result);
+  } catch {
+    return undefined;
+  }
+}
 
 export function listActiveStories(db: DB) {
   return db
@@ -39,8 +48,28 @@ export function getActiveStoryBundle(db: DB, id: string) {
     .all()
     .sort((a, b) => a.orderIndex - b.orderIndex);
   const as = db.select().from(assets).where(eq(assets.storyId, id)).all();
+  const latestSceneRenderJob = db
+    .select({
+      id: jobs.id,
+      status: jobs.status,
+      error: jobs.error,
+      result: jobs.result,
+    })
+    .from(jobs)
+    .where(and(eq(jobs.storyId, id), eq(jobs.kind, "scene_render")))
+    .orderBy(desc(jobs.updatedAt))
+    .get();
+  const sceneRenderFailureJob =
+    latestSceneRenderJob?.status === "partial_error"
+      ? {
+          id: latestSceneRenderJob.id,
+          status: latestSceneRenderJob.status,
+          error: latestSceneRenderJob.error,
+          result: parseJsonResult(latestSceneRenderJob.result),
+        }
+      : null;
 
-  return { story, characters: cs, nodes: ns, assets: as };
+  return { story, characters: cs, nodes: ns, assets: as, sceneRenderFailureJob };
 }
 
 export function logicallyDeleteStory(db: DB, id: string) {

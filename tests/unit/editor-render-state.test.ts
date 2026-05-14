@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  countRetryableSceneRenderFailures,
   isBulkSceneRendering,
   renderProgressLabel,
   shouldAutoStartSceneRender,
@@ -26,5 +27,26 @@ describe("editor render state", () => {
       "2 / 5",
     );
     expect(renderProgressLabel({ progress: undefined, totalNodes: 3 })).toBe("0 / 3");
+  });
+
+  it("counts only failed scene render nodes that still do not have images", () => {
+    expect(
+      countRetryableSceneRenderFailures({
+        result: {
+          errors: [
+            { nodeId: "missing-image", message: "failed" },
+            { nodeId: "already-fixed", message: "failed earlier" },
+            { nodeId: "unknown-node", message: "stale" },
+          ],
+        },
+        nodes: [
+          { id: "missing-image", imageId: null },
+          { id: "already-fixed", imageId: "asset-1" },
+        ],
+      }),
+    ).toBe(1);
+
+    expect(countRetryableSceneRenderFailures({ result: { errors: [] }, nodes: [] })).toBe(0);
+    expect(countRetryableSceneRenderFailures({ result: null, nodes: [] })).toBe(0);
   });
 });

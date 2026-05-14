@@ -33,6 +33,7 @@ import {
 import { toast } from "sonner";
 import { buildStoryGalleryItems } from "../image-gallery";
 import {
+  countRetryableSceneRenderFailures,
   isBulkSceneRendering,
   renderProgressLabel,
   shouldAutoStartSceneRender,
@@ -129,12 +130,16 @@ export function EditorCanvas({
   const flowRef = useRef<ReactFlowInstance | null>(null);
   const [organizing, setOrganizing] = useState(false);
   const modeAction = getStoryModeAction("edit");
+  const sceneRenderFailureResult =
+    renderJob.status === "partial_error"
+      ? renderJob.result
+      : data.sceneRenderFailureJob?.result;
   const partialRenderFailureCount = useMemo(() => {
-    const result = renderJob.result;
-    if (typeof result !== "object" || result === null || !("errors" in result)) return 0;
-    const errors = (result as { errors?: unknown }).errors;
-    return Array.isArray(errors) ? errors.length : 0;
-  }, [renderJob.result]);
+    return countRetryableSceneRenderFailures({
+      result: sceneRenderFailureResult,
+      nodes: sortedNodes,
+    });
+  }, [sceneRenderFailureResult, sortedNodes]);
 
   const startRenderAll = useCallback(async () => {
     if (startingRenderRef.current) return;
@@ -255,7 +260,7 @@ export function EditorCanvas({
               {renderProgressLabel({ progress: renderJob.progress, totalNodes: sortedNodes.length })}
             </div>
           )}
-          {renderJob.status === "partial_error" && (
+          {partialRenderFailureCount > 0 && (
             <Button
               variant="secondary"
               size="sm"

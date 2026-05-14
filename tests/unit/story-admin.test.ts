@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeTestDb } from "../helpers/db";
-import { characters, nodes, stories } from "@/lib/db/schema";
+import { characters, jobs, nodes, stories } from "@/lib/db/schema";
 import {
   getActiveStoryBundle,
   listActiveStories,
@@ -84,5 +84,71 @@ describe("story admin service", () => {
       .run();
 
     expect(getActiveStoryBundle(db, "deleted")).toBeNull();
+  });
+
+  it("includes the latest partial scene render job in the active story bundle", async () => {
+    const { db } = await makeTestDb();
+    db.insert(stories).values({ id: "story-1", inputMode: "structured" }).run();
+    db.insert(jobs)
+      .values({
+        id: "older-job",
+        storyId: "story-1",
+        kind: "scene_render",
+        status: "partial_error",
+        error: "older failure",
+        result: JSON.stringify({ errors: [{ nodeId: "node-1", message: "older" }] }),
+        updatedAt: 10,
+      })
+      .run();
+    db.insert(jobs)
+      .values({
+        id: "latest-job",
+        storyId: "story-1",
+        kind: "scene_render",
+        status: "partial_error",
+        error: "latest failure",
+        result: JSON.stringify({ errors: [{ nodeId: "node-2", message: "latest" }] }),
+        updatedAt: 20,
+      })
+      .run();
+
+    const bundle = getActiveStoryBundle(db, "story-1");
+
+    expect(bundle?.sceneRenderFailureJob).toEqual({
+      id: "latest-job",
+      status: "partial_error",
+      error: "latest failure",
+      result: { errors: [{ nodeId: "node-2", message: "latest" }] },
+    });
+  });
+
+  it("does not include an older partial scene render job after a newer successful batch render", async () => {
+    const { db } = await makeTestDb();
+    db.insert(stories).values({ id: "story-1", inputMode: "structured" }).run();
+    db.insert(jobs)
+      .values({
+        id: "older-job",
+        storyId: "story-1",
+        kind: "scene_render",
+        status: "partial_error",
+        error: "older failure",
+        result: JSON.stringify({ errors: [{ nodeId: "node-1", message: "older" }] }),
+        updatedAt: 10,
+      })
+      .run();
+    db.insert(jobs)
+      .values({
+        id: "latest-job",
+        storyId: "story-1",
+        kind: "scene_render",
+        status: "done",
+        result: JSON.stringify({ errors: [] }),
+        updatedAt: 20,
+      })
+      .run();
+
+    const bundle = getActiveStoryBundle(db, "story-1");
+
+    expect(bundle?.sceneRenderFailureJob).toBeNull();
   });
 });
